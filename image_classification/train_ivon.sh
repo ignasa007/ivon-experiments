@@ -1,22 +1,21 @@
 #!/bin/bash
-ts=$(date +"%Y%m%dT%H%M%S")
+ts=$(date "+%Y-%m-%d-%H-%M-%S")
 datadir=../datasets
-dataset=$1  # cifar10/cifar100/tinyimagenet
-model=$2  # resnet20/resnet18wide/preresnet110/densenet121
+dataset=${1}  # cifar10/cifar100/tinyimagenet
+model=${2}  # resnet20/resnet18wide/preresnet110/densenet121
 optimizer=ivon
-epochs=200
+epochs=10
 device=cuda  # cpu/cuda/cuda:X
 lr=0.2
 momentum=0.9
 momentum_hess=0.99999
 wdecay=2e-4
+hess_approx=${3}
 tbatch=50
 vbatch=50
 hess_init=0.5
 split=1.0
-seed=$3 
-
-savedir=../trained/${dataset}/${optimizer}/${model}
+seed=${4:-null}
 
 case $dataset in
 
@@ -34,10 +33,11 @@ case $dataset in
     ;;
 esac
 
+savedir=../results/${dataset}/${model}/${optimizer}-${hess_approx}/seed=${seed}/${ts}
 
-mkdir -p ${savedir}/${seed}
-python -u train.py ${model} ${dataset} -opt ${optimizer} -s $seed -dd ${datadir} \
-       -sd ${savedir}/${seed} -lr ${lr} -e ${epochs} --weight-decay ${wdecay} \
+mkdir -p ${savedir}
+python -u train.py ${model} ${dataset} -opt ${optimizer} -s ${seed} -dd ${datadir} \
+       -sd ${savedir} -lr ${lr} -e ${epochs} --weight-decay ${wdecay} --hess_approx ${hess_approx} \
        --momentum ${momentum} --momentum_hess ${momentum_hess} --hess_init ${hess_init} \
        --ess ${ess} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
-       --tvsplit ${split} |& tee -a ${savedir}/${seed}/stdout-${ts}.log
+       --tvsplit ${split} |& tee -a ${savedir}/stdout.log

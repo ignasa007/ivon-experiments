@@ -20,7 +20,7 @@ from torch.optim.lr_scheduler import LRScheduler, LinearLR, CosineAnnealingLR
 #    from torch.utils.tensorboard import SummaryWriter
 #except:   
 SummaryWriter = None
-from ivon import IVON
+from optimizers import IVON, uCBOpt
 from . import models
 from .adahessian import AdaHessian
 from .vogn import VOGN
@@ -810,6 +810,7 @@ def loadcheckpoint(fromfile, device=torch.device("cpu"), epochs=200):
         "VOGN": VOGN,
         "AdaHessian": AdaHessian,
         "IVON": IVON,
+        "uCBOpt": uCBOpt,
     }[dic["optimname"]](model.parameters(), **dic.pop("optimargs"))
     optimizer.load_state_dict(dic.pop("optimstates"))
     schedulername = dic["schedulername"]
@@ -817,7 +818,7 @@ def loadcheckpoint(fromfile, device=torch.device("cpu"), epochs=200):
         scheduler = LinearLR(optimizer)
     elif schedulername == "CosineAnnealingLR":
         scheduler = CosineAnnealingLR(
-            optimizer, eta_min=0.0, T_max=epochs, verbose=True
+            optimizer, eta_min=0.0, T_max=epochs    # , verbose=True
         )
     else:
         raise NotImplementedError

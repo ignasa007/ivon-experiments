@@ -276,9 +276,11 @@ class IVON(torch.optim.Optimizer):
         assert offset == self._numel  # sanity check
 
     @staticmethod
-    def _get_nll_hess(method: str, hess, avg_nxg, avg_gsq, pg_slice) -> Tensor:
+    def _get_nll_hess(
+        method: str, hess, avg_nxg, avg_gsq, pg_slice, ess
+    ) -> Tensor:
         if method == 'price':
-            return avg_nxg[pg_slice] * hess
+            return avg_nxg[pg_slice] * hess * ess
         elif method == 'gradsq':
             return avg_gsq[pg_slice]
         else:
@@ -293,8 +295,10 @@ class IVON(torch.optim.Optimizer):
         method, hess, avg_nxg, avg_gsq, pg_slice, ess, beta2, wd
     ) -> Tensor:
         f = IVON._get_nll_hess(
-            method, hess + wd, avg_nxg, avg_gsq, pg_slice
-        ) * ess
+            method, hess + wd, avg_nxg, avg_gsq, pg_slice, ess
+        )
+        indices = f.abs().argmax().item()
+        print((1.0 - beta2) * f.flatten()[indices].item(), beta2 * hess.flatten()[indices].item())
         return beta2 * hess + (1.0 - beta2) * f + \
             (0.5 * (1 - beta2) ** 2) * (hess - f).square() / (hess + wd)
 

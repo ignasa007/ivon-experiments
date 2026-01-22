@@ -3,12 +3,10 @@ import argparse
 from os.path import join as pjoin, exists
 from glob import glob
 import torch
-import torch.nn.functional as nnf
 import sys
 
-sys.path.append("..")
-from optimizers import IVON
-from common import models
+sys.path.insert(0, "..")
+from common.models import loadmodel
 from common.utils import coro_timer, mkdirp
 from common.calibration import bins2diagram
 from common.dataloaders import (
@@ -24,35 +22,18 @@ from common.trainutils import (
     do_evalbatch,
     check_cuda,
     deteministic_run,
-    summarize_csv,
+    SummaryWriter,
     get_outputsaver,
-    loadcheckpoint,
+    summarize_csv,
 )
 
 
-# if compile fails, fall back to eager
-# torch._dynamo.config.suppress_errors = True
-
-
-# standard load model function
-def loadmodel(fromfile, device=torch.device("cpu")):
-    dic = torch.load(fromfile, map_location=device)
-    model = models.__dict__[dic["modelname"]](
-        *dic["modelargs"], **dic.get("modelkwargs", {})
-    ).to(device)
-    model.load_state_dict(dic.pop("modelstates"))
-    return model, dic
-
-
 def get_args():
-    parser = argparse.ArgumentParser(description="CIFAR10/100 IVON test")
+    parser = argparse.ArgumentParser(
+        description="CIFAR10/100 standard/MCDropout test"
+    )
     parser.add_argument(
         "traindir", type=str, help="path that collects all trained runs."
-    )
-
-    parser.add_argument(
-        "dataset",
-        type=str,
     )
     parser.add_argument(
         "-j",
@@ -65,17 +46,24 @@ def get_args():
     parser.add_argument(
         "-b",
         "--batch",
-        default=512,
+        default=128,
         type=int,
         metavar="N",
         help="test mini-batch size",
     )
     parser.add_argument(
+        "-ts",
+        "--testsamples",
+        default=1,
+        type=int,
+        help="create test samples via duplicating batch",
+    )
+    parser.add_argument(
         "-tr",
         "--testrepeat",
-        default=0,
+        default=1,
         type=int,
-        help="create test samples for ivon",
+        help="create test samples via process repeat",
     )
     parser.add_argument(
         "-vd",
@@ -147,51 +135,48 @@ def get_args():
         action="store_true",
         help="plot reliability diagram for best val",
     )
+    parser.add_argument(
+        "-tbd",
+        "--tensorboard_dir",
+        default="",
+        type=str,
+        help="if specified, record data for tensorboard.",
+    )
+    parser.add_argument(
+        "--ensemble",
+        action="store_true",
+        help="run through seeds 5-24 instead of 0-4",
+    )
 
     return parser.parse_args()
 
 
-def get_dataloader(args):
+def get_dataloader(outclass: int, args):
+    dataset = {v: k for k, v in OUTCLASS.items()}[outclass]
     # load data
     if args.valdata:
-        _, data_loader = TRAINDATALOADERS[args.dataset](
+        _, data_loader = TRAINDATALOADERS[dataset](
             args.data_dir,
             args.tvsplit,
             args.workers,
             (device != torch.device("cpu")),
             args.batch,
             args.batch,
+            args.testsamples,
+            args.testsamples,
         )
     else:
-        data_loader = TESTDATALOADER[args.dataset](
+        data_loader = TESTDATALOADER[dataset](
             args.data_dir,
             args.workers,
             (device != torch.device("cpu")),
             args.batch,
+            args.testsamples,
         )
     return data_loader
 
 
-# generic boilerplate to eval/test a minibatch
-# should be wrapped within torch.no_grad()
-def do_evalbatch_ivon(batchinput, model, optimizer: IVON, repeat: int = 1):
-    inputs, gt = batchinput[:-1], batchinput[-1]
-    cumloss = 0.0
-    cumprob = torch.zeros([])
-    for _ in range(repeat):
-        with optimizer.sampled_params():
-            output = model(*inputs)
-        ll = nnf.log_softmax(output, 1)  # get log-likelihood
-        loss = nnf.nll_loss(ll, gt) / repeat
-        cumloss += loss.item()
-        prob = nnf.softmax(output, 1)  # get likelihood
-        cumprob = cumprob + prob / repeat
-    return cumprob, gt, cumloss
-
-
 if __name__ == "__main__":
-    torch.set_float32_matmul_precision('high')
-    
     timer = coro_timer()
     t_init = next(timer)
     print(f">>> Test initiated at {t_init.isoformat()} <<<\n")
@@ -212,45 +197,45 @@ if __name__ == "__main__":
     # build train_dir for this experiment
     mkdirp(args.save_dir)
 
-    log_ece = coro_log_auroc(None, args.printfreq, args.bins, args.save_dir)
+    # prep tensorboard if specified
+    if args.tensorboard_dir:
+        mkdirp(args.tensorboard_dir)
+        sw = SummaryWriter(args.tensorboard_dir)
+    else:
+        sw = None
 
+    # distinguish between runs on validation data and test data
     prefix = "val" if args.valdata else "test"
+    dataset = "cifar10"
+    ndata = (
+        NTRAIN[dataset] - int(args.tvsplit * NTRAIN[dataset])
+        if args.valdata
+        else NTEST[dataset]
+    )
 
-    # iterate over all trained runs (0-4), assume model name best_model.pt
-    for runfolder in glob(f"{args.traindir}/seed=*/*"):
+    log_ece = coro_log_auroc(
+        sw, args.printfreq, args.bins, '' if args.ensemble else args.save_dir)
+
+    # iterate over trained runs
+    runs_range = range(5, 25) if args.ensemble else range(5)
+    for runfolder in sum((glob(f"{args.traindir}/seed={seed}/*") for seed in runs_range), start=list()):
         save_name = runfolder.rstrip(args.traindir).strip("/").replace("/", "_")
         model_path = pjoin(runfolder, "checkpoint.pt")
         if not exists(model_path):
             print(f"skipping {runfolder}\n")
             continue
-
         print(f"loading model from {model_path} ...\n")
         # resume model
-        # model, dic = loadmodel(model_path, device)
-        _, model, optimizer = loadcheckpoint(model_path, device)[:3]
-        print(optimizer.defaults)
-        data_loader = get_dataloader(args)
-        dataset = args.dataset
-        ndata = (
-            NTRAIN[dataset] - int(args.tvsplit * NTRAIN[dataset])
-            if args.valdata
-            else NTEST[dataset]
-        )
-        if isinstance(optimizer, IVON):
-            if args.testrepeat:
-                prefix = "val_bayes" if args.valdata else "test_bayes"
-            else:
-                prefix = "val_map" if args.valdata else "test_map"
-        else:
-            prefix = "val" if args.valdata else "test"
-
+        model, dic = loadmodel(model_path, device)
+        outclass = dic["modelargs"][0]
+        data_loader = get_dataloader(outclass, args)
         print(f">>> Test starts at {next(timer)[0].isoformat()} <<<\n")
 
         if args.saveoutput:
             outputsaver = get_outputsaver(
                 args.save_dir,
                 ndata,
-                OUTCLASS[dataset],
+                outclass,
                 f"predictions_{prefix}_{save_name}.npy",
             )
         else:
@@ -259,25 +244,15 @@ if __name__ == "__main__":
         log_ece.send((save_name, prefix, len(data_loader), outputsaver))
         with torch.no_grad():
             model.eval()
-            if isinstance(optimizer, IVON) and args.testrepeat:
-                do_epoch(
-                    data_loader,
-                    do_evalbatch_ivon,
-                    log_ece,
-                    device,
-                    model=model,
-                    optimizer=optimizer,
-                    repeat=args.testrepeat,
-                )
-            else:
-                do_epoch(
-                    data_loader,
-                    do_evalbatch,
-                    log_ece,
-                    device,
-                    model=model,
-                )
-
+            do_epoch(
+                data_loader,
+                do_evalbatch,
+                log_ece,
+                device,
+                model=model,
+                dups=args.testsamples,
+                repeat=args.testrepeat,
+            )
         bins, _, avgvloss = log_ece.throw(StopIteration)[:3]
         if args.saveoutput:
             outputsaver.close()
@@ -292,8 +267,8 @@ if __name__ == "__main__":
 
         print(f">>> Time elapsed: {next(timer)[1]} <<<\n")
 
-    summarize_csv(pjoin(args.save_dir, f"{prefix}.csv"))
-
     log_ece.close()
+
+    summarize_csv(pjoin(args.save_dir, f"{prefix}.csv"))
 
     print(f">>> Test completed at {next(timer)[0].isoformat()} <<<\n")

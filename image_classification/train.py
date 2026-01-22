@@ -2,10 +2,10 @@ import argparse
 from os.path import join as pjoin
 import torch
 import torch.nn.functional as nnf
-from ivon import IVON
 import sys
 
 sys.path.append("..")
+from optimizers import IVON, uCBOpt
 from common.utils import coro_timer, mkdirp
 from common.models import STANDARDMODELS
 from common.dataloaders import (
@@ -172,17 +172,24 @@ def get_args():
         type=str,
         help="if specified, record data for tensorboard.",
     )
+    parser.add_argument("--hess_approx", default="price", type=str)
     parser.add_argument("--mc_samples", default=1, type=int)
     parser.add_argument("--momentum_hess", default=0.999, type=float)
     parser.add_argument("--hess_init", default=1.0, type=float)
     parser.add_argument("--ess", default=5e4, type=float)
-    parser.add_argument("--clip_radius", default=float("inf"), type=float)
+    parser.add_argument("--beta3", default=None, type=float)
+    parser.add_argument("--decoupled_wd", action="store_true")
+    parser.add_argument("--bias_corr", action="store_true")
+    parser.add_argument("--gamma", default=0.0, type=float)
+    parser.add_argument("--perturb_rad", default=0.0, type=float)
+    parser.add_argument("--clip_radius", default=torch.inf, type=float)
+    parser.add_argument("--rescale_lr", action="store_true")
     parser.add_argument("--warmup", default=5, type=int)
     parser.add_argument(
         "-opt",
         "--optimizer",
         default="ivon",
-        choices=["ivon", "sgd", "adamw", "adahessian"],
+        choices=["ivon", "sgd", "adamw", "adahessian", "ucbopt"],
         type=str,
         help="optimizer to use",
     )
@@ -238,6 +245,7 @@ train_functions = {
     "adamw": do_trainbatch,
     "adahessian": do_trainbatch_adahessian,
     "ivon": do_trainbatch_ivon,
+    "ucbopt": do_trainbatch,
 }
 
 
@@ -250,6 +258,7 @@ def get_optimizer(args, model):
             beta1=args.momentum,
             beta2=args.momentum_hess,
             weight_decay=args.weight_decay,
+            hess_approx=args.hess_approx,
             hess_init=args.hess_init,
             ess=args.ess,
             clip_radius=args.clip_radius,
@@ -275,6 +284,21 @@ def get_optimizer(args, model):
             model.parameters(),
             lr=args.learning_rate,
             weight_decay=args.weight_decay,
+        )
+    
+    elif args.optimizer == "ucbopt":
+        return uCBOpt(
+            model.parameters(),
+            lr=args.learning_rate,
+            rescale_lr=args.rescale_lr,
+            betas=(args.momentum, args.momentum_hess, args.beta3),
+            weight_decay=args.weight_decay,
+            decoupled_wd=args.decoupled_wd,
+            hess_init=args.hess_init,
+            bias_corr=args.bias_corr,
+            gamma=args.gamma,
+            perturb_rad=args.perturb_rad,
+            clip_radius=args.clip_radius,
         )
 
 

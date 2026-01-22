@@ -1,10 +1,11 @@
 import argparse
 from os.path import join as pjoin, exists
+from glob import glob
 import torch
-from ivon import IVON
 import sys
 
 sys.path.append("..")
+from optimizers import IVON
 from common.vogn import VOGN
 from common.swag import SWAG
 from common.utils import coro_timer, mkdirp, coro_dict2csv
@@ -234,13 +235,14 @@ if __name__ == "__main__":
     runs = sorted([str(i) for i in range(5)])
     valid_runs = []
 
-    for runfolder in runs:
-        model_path = pjoin(args.traindir, runfolder, "checkpoint.pt")
+    for runfolder in glob(f"{args.traindir}/seed=*/*"):
+        save_name = runfolder.rstrip(args.traindir).strip("/").replace("/", "_")
+        model_path = pjoin(runfolder, "checkpoint.pt")
         if not exists(model_path):
-            print(f"skipping {pjoin(args.traindir, runfolder)}\n")
+            print(f"skipping {runfolder}\n")
             continue
         else:
-            valid_runs.append(runfolder)
+            valid_runs.append(save_name)
 
         # resume model
         _, model, optimizer, _, ddat = loadcheckpoint(model_path, device)
@@ -255,7 +257,7 @@ if __name__ == "__main__":
                 args.save_dir,
                 10000,
                 outclass,
-                f"predictions_{indomain_prefix}_{runfolder}.npy",
+                f"predictions_{indomain_prefix}_{save_name}.npy",
             )
         else:
             outputsaver = None
@@ -310,7 +312,7 @@ if __name__ == "__main__":
                 args.save_dir,
                 OODInfo[args.ood_dataset].count["test"],
                 outclass,
-                f"predictions_{ood_prefix}_{runfolder}.npy",
+                f"predictions_{ood_prefix}_{save_name}.npy",
             )
         else:
             outputsaver = None
@@ -360,11 +362,11 @@ if __name__ == "__main__":
 
         indomain_conf = confidence_from_prediction_npy(
             pjoin(
-                args.save_dir, f"predictions_{indomain_prefix}_{runfolder}.npy"
+                args.save_dir, f"predictions_{indomain_prefix}_{save_name}.npy"
             )
         )
         ood_conf = confidence_from_prediction_npy(
-            pjoin(args.save_dir, f"predictions_{ood_prefix}_{runfolder}.npy")
+            pjoin(args.save_dir, f"predictions_{ood_prefix}_{save_name}.npy")
         )
         aucroc = auroc(indomain_conf, ood_conf)
         print(f"AUC-ROC score: {aucroc}")
