@@ -279,6 +279,7 @@ class IVON(torch.optim.Optimizer):
     def _get_nll_hess(
         method: str, hess, avg_nxg, avg_gsq, pg_slice, ess
     ) -> Tensor:
+        # NOTE: This was originally implemented incorrectly, see https://github.com/team-approx-bayes/ivon/issues/8
         if method == 'price':
             return avg_nxg[pg_slice] * hess * ess
         elif method == 'gradsq':
@@ -294,11 +295,10 @@ class IVON(torch.optim.Optimizer):
     def _new_hess(
         method, hess, avg_nxg, avg_gsq, pg_slice, ess, beta2, wd
     ) -> Tensor:
+        # NOTE: This was originally implemented incorrectly, see https://github.com/team-approx-bayes/ivon/issues/8
         f = IVON._get_nll_hess(
             method, hess + wd, avg_nxg, avg_gsq, pg_slice, ess
         )
-        indices = f.abs().argmax().item()
-        print((1.0 - beta2) * f.flatten()[indices].item(), beta2 * hess.flatten()[indices].item())
         return beta2 * hess + (1.0 - beta2) * f + \
             (0.5 * (1 - beta2) ** 2) * (hess - f).square() / (hess + wd)
 
