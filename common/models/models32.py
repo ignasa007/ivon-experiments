@@ -196,7 +196,6 @@ class MakeResnetFn(nn.Module):
 def make_resnet20_frn_fn(data_info, activation=torch.nn.Identity):
     num_classes = data_info["num_classes"]
     input_size = data_info.get("input_size", 32)
-    print(activation)
     return MakeResnetFn(
         num_classes,
         depth=20,
