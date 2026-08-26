@@ -425,10 +425,10 @@ if __name__ == "__main__":
             scheduler,
         )
 
-        checkpoint_epochs = [0, 1, 2, 5, 10, 20, 30, 40, 50, 75, 100, 150, 200]
-        if e in checkpoint_epochs:
+        checkpoint_epochs = [1, 2, 5, 10, 20, 30, 40, 50, 75, 100, 150, 200]
+        if e+1 in checkpoint_epochs:
             savecheckpoint(
-                pjoin(args.save_dir, "checkpoint%03d.pt" % (e + 1)),
+                pjoin(args.save_dir, "checkpoint%03d.pt" % (e+1)),
                 args.arch,
                 modelargs,
                 modelkwargs,
