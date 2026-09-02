@@ -5,7 +5,7 @@ import torch.nn.functional as nnf
 import sys
 
 sys.path.append("..")
-from optimizers import IVON, uCBOpt
+from optimizers import IVON, IVAdam
 from common.utils import coro_timer, mkdirp
 from common.models import STANDARDMODELS
 from common.dataloaders import (
@@ -177,11 +177,8 @@ def get_args():
     parser.add_argument("--momentum_hess", default=0.999, type=float)
     parser.add_argument("--hess_init", default=1.0, type=float)
     parser.add_argument("--ess", default=5e4, type=float)
-    parser.add_argument("--beta3", default=None, type=float)
-    parser.add_argument("--decoupled_wd", action="store_true")
+    parser.add_argument("--coupled_wd", action="store_true")
     parser.add_argument("--bias_corr", action="store_true")
-    parser.add_argument("--gamma", default=0.0, type=float)
-    parser.add_argument("--perturb_rad", default=0.0, type=float)
     parser.add_argument("--clip_radius", default=torch.inf, type=float)
     parser.add_argument("--rescale_lr", action="store_true")
     parser.add_argument("--warmup", default=5, type=int)
@@ -189,7 +186,7 @@ def get_args():
         "-opt",
         "--optimizer",
         default="ivon",
-        choices=["ivon", "sgd", "adamw", "adahessian", "ucbopt"],
+        choices=["ivon", "sgd", "adamw", "adahessian", "ivadam"],
         type=str,
         help="optimizer to use",
     )
@@ -212,6 +209,34 @@ def do_trainbatch_ivon(batchinput, model, optimizer):
         loss_samples.append(loss.detach())
         prob_samples.append(nnf.softmax(output.detach(), -1))
 
+    optimizer.step()
+
+    loss = torch.mean(torch.stack(loss_samples, dim=0), dim=0)
+    prob = torch.mean(torch.stack(prob_samples, dim=0), dim=0)
+
+    return prob, target, loss.item()
+
+
+def do_trainbatch_ivadam(batchinput, model, optimizer):
+    
+    images, target = batchinput
+    loss_samples, prob_samples = list(), list()
+
+    # Store the parameter mean
+    optimizer.store_param_data()
+    # Clear the gradients of each parameter
+    optimizer.zero_grad()
+    for _ in range(args.mc_samples):
+        # Sample parameter data using the stored means and noise estimates
+        optimizer.sample_param_data()
+        output = model(images)
+        loss = nnf.cross_entropy(output, target)
+        # Backprop loss averaged over MC samples
+        (loss/args.mc_samples).backward()
+        loss_samples.append(loss.detach())
+        prob_samples.append(nnf.softmax(output.detach(), -1))
+    # Restore parameter data to be the mean stored before sampling
+    optimizer.restore_param_data(clear_data=True)
     optimizer.step()
 
     loss = torch.mean(torch.stack(loss_samples, dim=0), dim=0)
@@ -245,7 +270,7 @@ train_functions = {
     "adamw": do_trainbatch,
     "adahessian": do_trainbatch_adahessian,
     "ivon": do_trainbatch_ivon,
-    "ucbopt": do_trainbatch,
+    "ivadam": do_trainbatch_ivadam,
 }
 
 
@@ -286,19 +311,14 @@ def get_optimizer(args, model):
             weight_decay=args.weight_decay,
         )
     
-    elif args.optimizer == "ucbopt":
-        return uCBOpt(
+    elif args.optimizer == "ivadam":
+        return IVAdam(
             model.parameters(),
+            ess=args.ess,
             lr=args.learning_rate,
-            rescale_lr=args.rescale_lr,
-            betas=(args.momentum, args.momentum_hess, args.beta3),
+            betas=(args.momentum, args.momentum_hess),
             weight_decay=args.weight_decay,
-            decoupled_wd=args.decoupled_wd,
-            hess_init=args.hess_init,
-            bias_corr=args.bias_corr,
-            gamma=args.gamma,
-            perturb_rad=args.perturb_rad,
-            clip_radius=args.clip_radius,
+            decoupled_wd=not args.coupled_wd,
         )
 
 

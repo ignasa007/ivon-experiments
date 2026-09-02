@@ -13,14 +13,11 @@ import torch
 from torch import Tensor, LongTensor, nn
 import torch.nn.functional as nnf
 from torch.utils.data import DataLoader
-from torch.optim import SGD, AdamW, Optimizer
+from torch.optim import SGD, Adam, Optimizer
 from torch.optim.lr_scheduler import LRScheduler, LinearLR, CosineAnnealingLR
 
-#try:
-#    from torch.utils.tensorboard import SummaryWriter
-#except:   
-SummaryWriter = None
-from optimizers import IVON, uCBOpt
+from torch.utils.tensorboard import SummaryWriter
+from optimizers import IVON, IVAdam
 from . import models
 from .adahessian import AdaHessian
 from .vogn import VOGN
@@ -806,11 +803,13 @@ def loadcheckpoint(fromfile, device=torch.device("cpu"), epochs=200):
     model, dic = models.loadmodel(fromfile, device)
     optimizer = {
         "SGD": SGD,
-        "AdamW": AdamW,
+        # This was implemented incorrectly -- AdamW's defaults includes decoupled_weight_decay,
+        # but its initialization doesn't, which results in AdamW(model.parameters(), **dic.pop("optimargs")) failing
+        "AdamW": Adam,
         "VOGN": VOGN,
         "AdaHessian": AdaHessian,
         "IVON": IVON,
-        "uCBOpt": uCBOpt,
+        "IVAdam": IVAdam,
     }[dic["optimname"]](model.parameters(), **dic.pop("optimargs"))
     optimizer.load_state_dict(dic.pop("optimstates"))
     schedulername = dic["schedulername"]
