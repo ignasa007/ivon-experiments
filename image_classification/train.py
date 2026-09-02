@@ -186,7 +186,7 @@ def get_args():
         "-opt",
         "--optimizer",
         default="ivon",
-        choices=["ivon", "sgd", "adamw", "adahessian", "ivadam"],
+        choices=["ivon", "sgd", "adam", "adahessian", "ivadam"],
         type=str,
         help="optimizer to use",
     )
@@ -267,7 +267,7 @@ def do_trainbatch_adahessian(batchinput, model, optimizer):
 
 train_functions = {
     "sgd": do_trainbatch,
-    "adamw": do_trainbatch,
+    "adam": do_trainbatch,
     "adahessian": do_trainbatch_adahessian,
     "ivon": do_trainbatch_ivon,
     "ivadam": do_trainbatch_ivadam,
@@ -296,12 +296,13 @@ def get_optimizer(args, model):
             momentum=args.momentum,
             weight_decay=args.weight_decay,
         )
-
-    elif args.optimizer == "adamw":
-        return torch.optim.AdamW(
+    
+    elif args.optimizer == "adam":
+        return torch.optim.Adam(
             model.parameters(),
             lr=args.learning_rate,
             weight_decay=args.weight_decay,
+            decoupled_weight_decay=not args.coupled_wd,
         )
 
     elif args.optimizer == "adahessian":

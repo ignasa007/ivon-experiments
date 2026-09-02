@@ -803,6 +803,7 @@ def loadcheckpoint(fromfile, device=torch.device("cpu"), epochs=200):
     model, dic = models.loadmodel(fromfile, device)
     optimizer = {
         "SGD": SGD,
+        "Adam": Adam,
         # This was implemented incorrectly -- AdamW's defaults includes decoupled_weight_decay,
         # but its initialization doesn't, which results in AdamW(model.parameters(), **dic.pop("optimargs")) failing
         "AdamW": Adam,

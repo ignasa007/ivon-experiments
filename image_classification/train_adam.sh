@@ -13,10 +13,10 @@ vbatch=50
 split=1.0
 seed=${3:-null}
 
-savedir=../results/${dataset}/${model}/${optimizer}w/seed=${seed}/${ts}
+savedir=../results/${dataset}/${model}/${optimizer}/seed=${seed}/${ts}
 
 mkdir -p ${savedir}
 python -u train.py ${model} ${dataset} -opt ${optimizer} -s $seed -dd ${datadir} \
-       -sd ${savedir} -lr ${lr} -e ${epochs} --weight-decay ${wdecay} \
+       -sd ${savedir} -lr ${lr} -e ${epochs} --weight-decay ${wdecay} --coupled_wd \
        --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
        --tvsplit ${split} |& tee -a ${savedir}/stdout.log
