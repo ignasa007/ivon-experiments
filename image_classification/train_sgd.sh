@@ -18,6 +18,6 @@ savedir=../trained/${dataset}/${model}/${optimizer}/seed=${seed}/${ts}
 
 mkdir -p ${savedir}
 python -u train.py ${model} ${dataset} -opt ${optimizer} -s $seed -dd ${datadir} \
-       -sd ${savedir} -lr ${lr} -e ${epochs} --weight-decay ${wdecay} \
-       --momentum ${momentum} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
-       --tvsplit ${split} |& tee -a ${savedir}/stdout.log
+    -sd ${savedir} -lr ${lr} -e ${epochs} --weight-decay ${wdecay} \
+    --momentum ${momentum} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
+    --tvsplit ${split} |& tee -a ${savedir}/stdout.log

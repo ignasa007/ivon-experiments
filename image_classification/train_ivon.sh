@@ -19,25 +19,25 @@ seed=${4:-null}
 
 case $dataset in
 
-  cifar10 | cifar100)
-    ess=50000
-    ;;
+    cifar10 | cifar100)
+        ess=50000
+        ;;
 
-  tinyimagenet)
-    ess=200000
-    ;;
+    tinyimagenet)
+        ess=200000
+        ;;
 
-  *)
-    echo -n "unknown dataset: ${dataset}"
-    exit 1
-    ;;
+    *)
+        echo -n "unknown dataset: ${dataset}"
+        exit 1
+        ;;
 esac
 
 savedir=../results/${dataset}/${model}/${optimizer}-${hess_approx}/seed=${seed}/${ts}
 
 mkdir -p ${savedir}
 python -u train.py ${model} ${dataset} -opt ${optimizer} -s ${seed} -dd ${datadir} \
-       -sd ${savedir} -lr ${lr} -e ${epochs} --weight-decay ${wdecay} --hess_approx ${hess_approx} \
-       --momentum ${momentum} --momentum_hess ${momentum_hess} --hess_init ${hess_init} \
-       --ess ${ess} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
-       --tvsplit ${split} |& tee -a ${savedir}/stdout.log
+    -sd ${savedir} -lr ${lr} -e ${epochs} --weight-decay ${wdecay} --hess_approx ${hess_approx} \
+    --momentum ${momentum} --momentum_hess ${momentum_hess} --hess_init ${hess_init} \
+    --ess ${ess} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
+    --tvsplit ${split} |& tee -a ${savedir}/stdout.log
