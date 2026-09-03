@@ -3,7 +3,7 @@ fns = [
     "momentum.py",
     "expavgsq_baseline.py",
     "expavgsq_25k.py",
-    # "expavgsq_xent.py",     # This needs editting the threshold for filtering points
+    "expavgsq_xent.py",
     "expavgsq_fmnist.py",
     "expavgsq_cifar10.py",
     "expavgsq_cifar100.py",

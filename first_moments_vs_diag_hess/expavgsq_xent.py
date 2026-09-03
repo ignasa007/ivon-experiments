@@ -12,7 +12,7 @@ MODEL, WIDTHS, MODEL_KWARGS = MLP, [64]*3, dict()
 ACTIVATION, ACT_KWARGS = "ReLU", dict()
 LOSS_TYPE = "Cross Entropy Loss"
 OPTIMIZER, OPTIM_KWARGS = optim.Adam, dict(lr=1e-3, betas=(0.9, 0.95))
-EPOCHS = 1000; LOG_EVERY = EPOCHS // CKPTS
+EPOCHS = 2000; LOG_EVERY = EPOCHS // CKPTS
 
 assets, out = train_gd(
     Dataset=torchvision.datasets.MNIST, output_dim=OUTPUT_DIM, subset_size=SUBSET_SIZE,
@@ -28,4 +28,4 @@ ckpts = [1, 3, 5, 7, 9, 10]
 xlabel = "Exp Avg Sq"
 ylabel = "Hessian Diagonal"
 
-plot(grads, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{ASSETS}/expavgsq-xent.png")
+plot(grads, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{OPTIMIZER.__name__.lower()}/expavgsq-xent.png")

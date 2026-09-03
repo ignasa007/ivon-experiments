@@ -33,9 +33,9 @@ ylabel = "Hessian Diagonal"
 OPTIM_KWARGS = dict(lr=1e-3, betas=(0.9, 0.9))
 assets, out = train_gd(optim_kwargs=OPTIM_KWARGS)
 losses, grads, hess_diags = out
-plot(grads, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{ASSETS}/expavgsq-beta2=0.9.png")
+plot(grads, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{OPTIMIZER.__name__.lower()}/expavgsq-beta2=0.9.png")
 
-OPTIMIZER, OPTIM_KWARGS = optim.Adam, dict(lr=1e-3, betas=(0.9, 0.99))
+OPTIM_KWARGS = dict(lr=1e-3, betas=(0.9, 0.99))
 assets, out = train_gd(optim_kwargs=OPTIM_KWARGS)
 losses, grads, hess_diags = out
-plot(grads, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{ASSETS}/expavgsq-beta2=0.99.png")
+plot(grads, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{OPTIMIZER.__name__.lower()}/expavgsq-beta2=0.99.png")

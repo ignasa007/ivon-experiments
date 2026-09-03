@@ -147,7 +147,7 @@ def train_gd(
         if epoch % log_every == 0:
             _, predicted = torch.max(outputs.data, 1)
             acc = (predicted == labels).float().mean().item() * 100
-            print(f'Epoch [{epoch}/{epochs}], Loss: {loss.item():.4f}, Acc: {acc:.2f}%')
+            print(f'Epoch [{epoch}/{epochs}], Loss: {loss.item():.2e}, Acc: {acc:.2f}%')
         if epoch % log_every == 0:
             tracked_vals.append(evaluate_tracker_fns(tracker_fns))
 
@@ -228,11 +228,11 @@ def plot(xs, ys, ckpts, log_every, xlabel, ylabel, save_fn=None):
     fig, axs = plt.subplots(2, 3, figsize=(7.2*3, 4.8*2))
     for i, (ckpt, ax) in enumerate(zip(ckpts, axs.flatten())):
         x, y = np.asarray(xs[ckpt]), np.asarray(ys[ckpt])
-        mask = (x > 1e-16) & (y > 1e-16)
-        x, y = 1/x[mask], 1/y[mask]
+        mask = (x > 1e-24) & (y > 1e-16)
+        x, y = x[mask], y[mask]
         ax.scatter(x, y, s=1, label="Data" if i==0 else None)
         if sum(mask) >= 2:
-            p0 = [0., 1/75., 0.5]
+            p0 = [0., 75., 0.5]
             bounds = (0, np.inf)
             try:
                 (a_fit, b_fit, c_fit), _ = curve_fit(power_law_offset, x, np.log(y), p0=p0, bounds=bounds, maxfev=10000)

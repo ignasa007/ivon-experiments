@@ -28,4 +28,4 @@ ckpts = [1, 3, 5, 7, 9, 10]
 xlabel = "Exp Avg Sq"
 ylabel = "Hessian Diagonal"
 
-plot(grads, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{ASSETS}/expavgsq-eps=1e-6.png")
+plot(grads, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{OPTIMIZER.__name__.lower()}/expavgsq-eps=1e-6.png")

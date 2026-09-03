@@ -28,4 +28,4 @@ ckpts = [1, 3, 5, 7, 9, 10]
 xlabel = "Gradient"
 ylabel = "Hessian Diagonal"
 
-plot(grads, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{ASSETS}/gradient.png")
+plot(grads, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{OPTIMIZER.__name__.lower()}/gradient.png")
