@@ -225,7 +225,7 @@ def power_law_offset(x, a, b, c):
 
 def plot(xs, ys, ckpts, log_every, xlabel, ylabel, save_fn=None):
 
-    fig, axs = plt.subplots(2, 3, figsize=(7.2*3, 4.8*2))
+    fig, axs = plt.subplots(2, 3, figsize=(7.5*3, 4.5*2))
     for i, (ckpt, ax) in enumerate(zip(ckpts, axs.flatten())):
         x, y = np.asarray(xs[ckpt]), np.asarray(ys[ckpt])
         mask = (x > 1e-24) & (y > 1e-16)
