@@ -164,15 +164,6 @@ class IVAdam(Optimizer):
                     state = self.state[p]
                     state["param_data"] = p.data
 
-    def restore_param_data(self, clear_data: bool = False):
-        for group in self.param_groups:
-            for p in group["params"]:
-                if p.requires_grad:
-                    state = self.state[p]
-                    p.data = state["param_data"]
-                    if clear_data:
-                        del state["param_data"]
-
     def sample_param_data(self):
         for group in self.param_groups:
             for p in group["params"]:
@@ -183,6 +174,15 @@ class IVAdam(Optimizer):
                     p.data = state["param_data"] + torch.randn_like(p.data) / (
                         group["ess"]*(state["exp_avg_sq"].sqrt()+group["weight_decay"])
                     ).sqrt()
+
+    def restore_param_data(self, clear_data: bool = False):
+        for group in self.param_groups:
+            for p in group["params"]:
+                if p.requires_grad:
+                    state = self.state[p]
+                    p.data = state["param_data"]
+                    if clear_data:
+                        del state["param_data"]
 
 def _single_tensor_adam(
     params: list[Tensor],

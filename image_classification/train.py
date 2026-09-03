@@ -182,6 +182,7 @@ def get_args():
     parser.add_argument("--clip_radius", default=torch.inf, type=float)
     parser.add_argument("--rescale_lr", action="store_true")
     parser.add_argument("--warmup", default=5, type=int)
+    parser.add_argument("--at_mean", action="store_true")
     parser.add_argument(
         "-opt",
         "--optimizer",
@@ -426,7 +427,7 @@ if __name__ == "__main__":
 
         do_epoch(
             train_loader,
-            train_functions[args.optimizer],
+            train_functions[args.optimizer] if not args.at_mean else do_trainbatch,
             log_ece,
             device,
             model=model,

@@ -17,30 +17,35 @@ seed=${3:-null}
 
 case $dataset in
 
-  cifar10 | cifar100)
-    ess=50000
-    ;;
+	cifar10 | cifar100)
+		ess=50000
+		;;
 
-  tinyimagenet)
-    ess=200000
-    ;;
+	tinyimagenet)
+		ess=200000
+		;;
 
-  *)
-    echo -n "unknown dataset: ${dataset}"
-    exit 1
-    ;;
+	*)
+		echo -n "unknown dataset: ${dataset}"
+		exit 1
+		;;
 esac
 
+opt_name="${optimizer}"
 if [ -n "${coupled_wd+x}" ]; then
-    opt_name="${optimizer}-coupled"
+    opt_name="${opt_name}-coupled"
 else
-    opt_name="${optimizer}-decoupled"
+    opt_name="${opt_name}-decoupled"
+fi
+if [ -n "${at_mean+x}" ]; then
+    opt_name="${opt_name}-atmean"
 fi
 savedir=../results/${dataset}/${model}/${opt_name}/seed=${seed}/${ts}
 
 mkdir -p ${savedir}
 python -u train.py ${model} ${dataset} -opt ${optimizer} -s ${seed} -dd ${datadir} \
-       -sd ${savedir} -lr ${lr} -e ${epochs} --weight-decay ${wdecay} ${coupled_wd:+--coupled_wd} \
-       --momentum ${momentum} --momentum_hess ${momentum_hess} \
-       --ess ${ess} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
-       --tvsplit ${split} |& tee -a ${savedir}/stdout.log
+	-sd ${savedir} -lr ${lr} -e ${epochs} --weight-decay ${wdecay} \
+	${coupled_wd:+--coupled_wd} ${at_mean:+--at_mean} \
+	--momentum ${momentum} --momentum_hess ${momentum_hess} \
+	--ess ${ess} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
+	--tvsplit ${split} |& tee -a ${savedir}/stdout.log
