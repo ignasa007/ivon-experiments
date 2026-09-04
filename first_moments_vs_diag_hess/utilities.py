@@ -230,7 +230,7 @@ def plot(xs, ys, ckpts, log_every, xlabel, ylabel, save_fn=None):
         x, y = np.asarray(xs[ckpt]), np.asarray(ys[ckpt])
         mask = (x > 1e-24) & (y > 1e-16)
         x, y = x[mask], y[mask]
-        ax.scatter(x, y, s=1, label="Data" if i==0 else None)
+        ax.scatter(x, y, s=1, color="green", alpha=0.5, label="Data" if i==0 else None)
         if sum(mask) >= 2:
             p0 = [0., 75., 0.5]
             bounds = (0, np.inf)
