@@ -6,26 +6,16 @@ import matplotlib.pyplot as plt
 
 
 dirs = [
-    # Algo 1 in https://arxiv.org/pdf/2402.17641
-    ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12", "IVON-Price"),
-    # # Removed Riemannian GD term (line 5, in red)
-    # ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-38-47", None),
-    # # Removed second term in line 5, based on the assumption that ~1 β2 => update is h <- β2 h
-    # ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-39-50", None),
-    # # Removed δ from sampling stdev, step-size rescaling, and denom in lines in 7 and 8 -- idea being it is << h
-    # ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-57-06", None),
-    # AdamW with IVON-paper settings
-    ("results/cifar10/resnet20/adamw/seed=0/2026-08-27-21-41-19", "AdamW"),
-    # IVAdam with step-size 2e-3
-    ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-21-41-17", r"IVAdam ($\eta=2\cdot 10^{-3}, \delta=2\cdot 10^{-4}$)"),
-    # # IV Adam with step-size 2e-2
-    # ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-23-29-39", r"IVAdam ($\eta=2\cdot 10^{-2}, \delta=2\cdot 10^{-4}$)"),
-    # # IV Adam with step-size 2e-1
-    # ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-23-30-31", r"IV Adam with $\eta=0.2$"),
-    # Adam with AdamW settings
-    ("results/cifar10/resnet20/adam/seed=0/2026-09-02-17-15-51", "Adam"),
-    # IVAdam without sampling
-    ("results/cifar10/resnet20/ivadam-decoupled-atmean/seed=0/2026-09-02-16-19-40", "IVAdam@mean"),
+    ("results/cifar10/resnet20/adam/seed=0/2026-09-02-17-15-51", "Adam"),   # Adam with AdamW settings
+    ("results/cifar10/resnet20/adamw/seed=0/2026-08-27-21-41-19", "AdamW"), # AdamW with IVON-paper settings
+    ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12", "IVON-Price"),   # Algo 1 in https://arxiv.org/pdf/2402.17641
+    # ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-38-47", None),   # Removed Riemannian GD term (line 5, in red)
+    # ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-39-50", None),   # Removed second term in line 5, based on the assumption that ~1 β2 => update is h <- β2 h
+    # ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-57-06", None),   # Removed δ from sampling stdev, step-size rescaling, and denom in lines in 7 and 8 -- idea being it is << h
+    ("results/cifar10/resnet20/ivadam-decoupled-atmean/seed=0/2026-09-02-16-19-40", "IVAdam@mean"), # IVAdam without sampling
+    ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-21-41-17", r"IVAdam ($\eta=2\cdot 10^{-3}, \delta=2\cdot 10^{-4}$)"), # IVAdam with step-size 2e-3
+    # ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-23-29-39", r"IVAdam ($\eta=2\cdot 10^{-2}, \delta=2\cdot 10^{-4}$)"), # IV Adam with step-size 2e-2
+    # ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-23-30-31", r"IVAdam ($\eta=2\cdot 10^{-1}, \delta=2\cdot 10^{-4}$)"), # IV Adam with step-size 2e-1
 ]
 col = "acc"
 

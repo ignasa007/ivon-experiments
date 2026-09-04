@@ -121,7 +121,7 @@ def ivon_hess(train_loader, model, optimizer, data_samples):
 
 def main(d, approx_func, data_samples, hutchinson_samples, fit_func, nrows, ncols):
 
-    fig, axs = plt.subplots(nrows, ncols, figsize=(6.4*ncols, 4.8*nrows))
+    fig, axs = plt.subplots(nrows, ncols, figsize=(7.5*ncols, 4.5*nrows))
     if not hasattr(axs, "__len__"):
         axs = np.array((axs,))
     axs = axs.reshape((nrows, ncols))
@@ -162,29 +162,31 @@ def main(d, approx_func, data_samples, hutchinson_samples, fit_func, nrows, ncol
 
 if __name__ == "__main__":
 
-    DATA_SAMPLES = 5000
-    HUTCHINSON_SAMPLES = 100
+    DATA_SAMPLES = 10000
+    HUTCHINSON_SAMPLES = 500
     NROWS, NCOLS = 2, 3
 
-    D = "results/cifar10/resnet20/adamw/seed=0/2026-08-27-21-41-19"
+    D = "results/cifar10/resnet20/adam/seed=0/2026-09-02-17-15-51"
     FIT_FUNC = power_law_offset
-    APPROX_FUNC = grad
-    main(D, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
-    APPROX_FUNC = adam_expavg
-    main(D, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
     APPROX_FUNC = adam_expavgsq
     main(D, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
 
-    D = "results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-21-41-17"
+    D = "results/cifar10/resnet20/adamw/seed=0/2026-08-27-21-41-19"
     FIT_FUNC = power_law_offset
-    APPROX_FUNC = grad
-    main(D, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
-    APPROX_FUNC = adam_expavg
-    main(D, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
     APPROX_FUNC = adam_expavgsq
     main(D, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
 
     D = "results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12"
     APPROX_FUNC = ivon_hess
     FIT_FUNC = None
+    main(D, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
+
+    D = "results/cifar10/resnet20/ivadam-decoupled-atmean/seed=0/2026-09-02-16-19-40"
+    FIT_FUNC = power_law_offset
+    APPROX_FUNC = adam_expavgsq
+    main(D, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
+
+    D = "results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-21-41-17"
+    FIT_FUNC = power_law_offset
+    APPROX_FUNC = adam_expavgsq
     main(D, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
