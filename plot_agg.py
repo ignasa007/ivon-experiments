@@ -37,7 +37,7 @@ for ax, split in zip(axs, ("train", "test")):
             label = name if name is not None else basename(d)
             metrics.append(df.loc[:, col])
         mean, std = np.mean(metrics, axis=0), np.std(metrics, ddof=1, axis=0)
-        p = ax.plot(df.loc[:, "epoch"], mean, linestyle=linestyle, linewidth=3, label=label)
+        p = ax.plot(df.loc[:, "epoch"], mean, linestyle=linestyle, linewidth=5, label=label)
         ax.fill_between(df.loc[:, "epoch"], mean-3*std, mean+3*std, color=p[-1].get_color(), alpha=0.5)
     ax.tick_params(axis="both", which="major", labelsize=12)
     ax.set_xlabel("Epoch", fontsize=16)
