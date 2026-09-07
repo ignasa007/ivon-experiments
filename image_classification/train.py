@@ -5,7 +5,7 @@ import torch.nn.functional as nnf
 import sys
 
 sys.path.append("..")
-from optimizers import IVON, IVAdam
+from optimizers import IVON, IVAdam, PerturbedSGD
 from common.utils import coro_timer, mkdirp
 from common.models import STANDARDMODELS
 from common.dataloaders import (
@@ -187,7 +187,7 @@ def get_args():
         "-opt",
         "--optimizer",
         default="ivon",
-        choices=["ivon", "sgd", "adam", "adahessian", "ivadam"],
+        choices=["ivon", "sgd", "adam", "adahessian", "ivadam", "perturbedsgd"],
         type=str,
         help="optimizer to use",
     )
@@ -272,6 +272,7 @@ train_functions = {
     "adahessian": do_trainbatch_adahessian,
     "ivon": do_trainbatch_ivon,
     "ivadam": do_trainbatch_ivadam,
+    "perturbedsgd": do_trainbatch_ivadam,
 }
 
 
@@ -321,6 +322,15 @@ def get_optimizer(args, model):
             betas=(args.momentum, args.momentum_hess),
             weight_decay=args.weight_decay,
             decoupled_wd=not args.coupled_wd,
+        )
+    elif args.optimizer == "perturbedsgd":
+        return PerturbedSGD(
+            model.parameters(),
+            ess=args.ess,
+            lr=args.learning_rate,
+            betas=(args.momentum, args.momentum_hess),
+            weight_decay=args.weight_decay,
+            hess_init=args.hess_init,
         )
 
 

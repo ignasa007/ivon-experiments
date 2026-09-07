@@ -1,5 +1,3 @@
-from contextlib import contextmanager
-
 import torch
 from torch import Tensor
 from torch.optim.optimizer import (

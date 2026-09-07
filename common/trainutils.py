@@ -17,7 +17,7 @@ from torch.optim import SGD, Adam, Optimizer
 from torch.optim.lr_scheduler import LRScheduler, LinearLR, CosineAnnealingLR
 
 from torch.utils.tensorboard import SummaryWriter
-from optimizers import IVON, IVAdam
+from optimizers import IVON, IVAdam, PerturbedSGD
 from . import models
 from .adahessian import AdaHessian
 from .vogn import VOGN
@@ -811,6 +811,7 @@ def loadcheckpoint(fromfile, device=torch.device("cpu"), epochs=200):
         "AdaHessian": AdaHessian,
         "IVON": IVON,
         "IVAdam": IVAdam,
+        "PerturbedSGD": PerturbedSGD,
     }[dic["optimname"]](model.parameters(), **dic.pop("optimargs"))
     optimizer.load_state_dict(dic.pop("optimstates"))
     schedulername = dic["schedulername"]
