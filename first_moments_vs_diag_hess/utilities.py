@@ -222,36 +222,35 @@ def compute_hess_diag(X, Y, model, loss_type, optimizer, device, hutchinson_samp
 
 def power_law_offset(x, a, b, c):
     return np.log(a + b * (x ** c))
+def power_law_offset_format(a, b, c):
+    mantissa, exponent = f"{a:.2e}".split("e")
+    return f"$y = {mantissa} \\cdot 10^{{{exponent}}} + {b:.2f} \\cdot x^{{{c:.2f}}}$"
 
 def plot(xs, ys, ckpts, log_every, xlabel, ylabel, save_fn=None):
 
     fig, axs = plt.subplots(2, 3, figsize=(7.5*3, 4.5*2))
     for i, (ckpt, ax) in enumerate(zip(ckpts, axs.flatten())):
         x, y = np.asarray(xs[ckpt]), np.asarray(ys[ckpt])
-        mask = (x > 1e-24) & (y > 1e-16)
+        mask = (x > 1e-24) & (y > 1e-24)
         x, y = x[mask], y[mask]
-        ax.scatter(x, y, s=1, color="green", alpha=0.5, label="Data" if i==0 else None)
+        ax.scatter(x, y, s=1, color="yellowgreen", label="Data" if i==0 else None)
         if sum(mask) >= 2:
             p0 = [0., 75., 0.5]
             bounds = (0, np.inf)
-            try:
-                (a_fit, b_fit, c_fit), _ = curve_fit(power_law_offset, x, np.log(y), p0=p0, bounds=bounds, maxfev=10000)
-                x_fit = np.geomspace(x.min(), x.max(), 200)
-                y_fit = np.exp(power_law_offset(x_fit, a_fit, b_fit, c_fit))
-                mantissa, exponent = f"{a_fit:.2e}".split("e")
-                ax.plot(x_fit, y_fit, color="red", linestyle="--", linewidth=3, label=f"Fit: $y = {mantissa} \\cdot 10^{{{exponent}}} + {b_fit:.2f} \\cdot x^{{{c_fit:.2f}}}$")
-                ax.legend(fontsize=16, framealpha=1, markerscale=6)
-            except RuntimeError:
-                pass
+            opt, _ = curve_fit(power_law_offset, x, np.log(y), p0=p0, bounds=bounds, maxfev=10000)
+            x_fit = np.geomspace(x.min(), x.max(), 200)
+            y_fit = np.exp(power_law_offset(x_fit, *opt))
+            ax.plot(x_fit, y_fit, linewidth=5, linestyle="--", color="green", label=power_law_offset_format(*opt))
+            ax.legend(fontsize=20, framealpha=1, markerscale=8)
         ax.set_xscale("log")
         ax.set_yscale("log")
         ax.grid()
-        ax.tick_params(axis="both", which="major", labelsize=12)
-        ax.set_title(f"Checkpoint {ckpt*log_every}", fontsize=16)
+        ax.tick_params(axis="both", which="major", labelsize=15)
+        ax.set_title(f"Checkpoint {ckpt*log_every}", fontsize=20)
     for ax in axs[-1,:]:
-        ax.set_xlabel(xlabel, fontsize=16)
+        ax.set_xlabel(xlabel, fontsize=20)
     for ax in axs[:,0]:
-        ax.set_ylabel(ylabel, fontsize=16)
+        ax.set_ylabel(ylabel, fontsize=20)
 
     fig.tight_layout()
     if save_fn is not None:

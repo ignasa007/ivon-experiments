@@ -15,13 +15,20 @@ setups = [
         "results/cifar10/resnet20/ivon-price/seed=3/2026-09-06-23-21-25",
         "results/cifar10/resnet20/ivon-price/seed=4/2026-09-06-23-21-38",
     ], "IVON-Price"),
+    # ([
+    #     "results/cifar10/resnet20/ivon-gradsq/seed=0/2026-09-06-23-23-29",
+    #     "results/cifar10/resnet20/ivon-gradsq/seed=3/2026-09-07-01-42-24",
+    #     "results/cifar10/resnet20/ivon-gradsq/seed=4/2026-09-07-01-35-29",
+    #     "results/cifar10/resnet20/ivon-gradsq/seed=2/2026-09-07-01-37-38",
+    #     "results/cifar10/resnet20/ivon-gradsq/seed=1/2026-09-07-01-34-47",
+    # ], "IVON-Gradsq"),
     ([
-        "results/cifar10/resnet20/ivon-gradsq/seed=0/2026-09-06-23-23-29",
-        "results/cifar10/resnet20/ivon-gradsq/seed=3/2026-09-07-01-42-24",
-        "results/cifar10/resnet20/ivon-gradsq/seed=4/2026-09-07-01-35-29",
-        "results/cifar10/resnet20/ivon-gradsq/seed=2/2026-09-07-01-37-38",
-        "results/cifar10/resnet20/ivon-gradsq/seed=1/2026-09-07-01-34-47",
-    ], "IVON-Gradsq"),
+        "results/cifar10/resnet20/perturbedsgd/seed=0/2026-09-08-01-18-29",
+        "results/cifar10/resnet20/perturbedsgd/seed=1/2026-09-08-01-19-09",
+        "results/cifar10/resnet20/perturbedsgd/seed=2/2026-09-08-01-20-30",
+        "results/cifar10/resnet20/perturbedsgd/seed=3/2026-09-08-01-20-48",
+        "results/cifar10/resnet20/perturbedsgd/seed=4/2026-09-08-01-21-36",
+    ], "Perturbed SGD"),
 ]
 linestyles = ["-", "-.", "--", ":"]
 col = "acc"

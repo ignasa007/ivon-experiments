@@ -19,27 +19,26 @@ def power_law_offset(x, a, b, c):
     return np.log(a + b * (x ** c))
 def power_law_offset_format(a, b, c):
     mantissa, exponent = f"{a:.2e}".split("e")
-    return f"Fit: $y = {mantissa} \\cdot 10^{{{exponent}}} + {b:.2f} \\cdot x^{{{c:.2f}}}$"
+    return f"$y = {mantissa} \\cdot 10^{{{exponent}}} + {b:.2f} \\cdot x^{{{c:.2f}}}$"
 power_law_offset.format = power_law_offset_format
 
 def plot(ax, x, y, checkpoint, fit_func, label_data=True):
     mask = (x > 1e-24) & (y > 1e-24)
     x, y = x[mask], y[mask]
-    ax.scatter(x, y, s=1, label="Data" if label_data else None)
-    if sum(mask) >= 2:
+    ax.scatter(x, y, s=1, color="cornflowerblue", label="Data" if label_data else None)
+    if sum(mask) >= 2 and isinstance(fit_func, Callable):
         p0 = [0., 75., 0.5]
         bounds = (0, np.inf)
-        if isinstance(fit_func, Callable):
-            opt, _ = curve_fit(fit_func, x, np.log(y), p0=p0, bounds=bounds, maxfev=10000)
-            x_fit = np.geomspace(x.min(), x.max(), 200)
-            y_fit = np.exp(power_law_offset(x_fit, *opt))
-            ax.plot(x_fit, y_fit, color="red", linestyle="--", linewidth=3, label=fit_func.format(*opt))
-            ax.legend(fontsize=16, framealpha=1., markerscale=6)
+        opt, _ = curve_fit(fit_func, x, np.log(y), p0=p0, bounds=bounds, maxfev=10000)
+        x_fit = np.geomspace(x.min(), x.max(), 200)
+        y_fit = np.exp(power_law_offset(x_fit, *opt))
+        ax.plot(x_fit, y_fit, linewidth=5, linestyle="--", color="blue", label=fit_func.format(*opt))
+        ax.legend(fontsize=20, framealpha=1., markerscale=8)
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.grid()
-    ax.tick_params(axis="both", which="major", labelsize=12)
-    ax.set_title(f"Checkpoint {checkpoint}", fontsize=16)
+    ax.tick_params(axis="both", which="major", labelsize=15)
+    ax.set_title(f"Checkpoint {checkpoint}", fontsize=20)
 
 def adam_expavg(optimizer):
     out = torch.cat([
@@ -89,9 +88,9 @@ def main(exp_dir, approx_func, data_samples, hutchinson_samples, fit_func, nrows
         )
 
     for ax in axs[:,0]:
-        ax.set_ylabel("Hessian Diagonal", fontsize=16)
+        ax.set_ylabel("Hessian Diagonal", fontsize=20)
     for ax in axs[-1,:]:
-        ax.set_xlabel("Approximation", fontsize=16)
+        ax.set_xlabel("Approximation", fontsize=20)
 
     fig.tight_layout()
     plt.savefig(f"{save_dir}/{approx_func.__name__}.png")
@@ -99,31 +98,31 @@ def main(exp_dir, approx_func, data_samples, hutchinson_samples, fit_func, nrows
 
 if __name__ == "__main__":
 
-    DATA_SAMPLES = 100
-    HUTCHINSON_SAMPLES = 5
+    DATA_SAMPLES = 5000
+    HUTCHINSON_SAMPLES = 250
     NROWS, NCOLS = 2, 3
 
     EXP_DIR = "results/cifar10/resnet20/adam/seed=0/2026-09-02-17-15-51"
-    FIT_FUNC = power_law_offset
     APPROX_FUNC = adam_expavgsq
+    FIT_FUNC = power_law_offset
     main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
 
     EXP_DIR = "results/cifar10/resnet20/adamw/seed=0/2026-08-27-21-41-19"
-    FIT_FUNC = power_law_offset
     APPROX_FUNC = adam_expavgsq
+    FIT_FUNC = power_law_offset
     main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
 
-    # EXP_DIR = "results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12"
-    # APPROX_FUNC = ivon_hess
-    # FIT_FUNC = None
-    # main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
+    EXP_DIR = "results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12"
+    APPROX_FUNC = ivon_hess
+    FIT_FUNC = None
+    main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
 
     # EXP_DIR = "results/cifar10/resnet20/ivadam-decoupled-atmean/seed=0/2026-09-02-16-19-40"
-    # FIT_FUNC = power_law_offset
     # APPROX_FUNC = adam_expavgsq
+    # FIT_FUNC = power_law_offset
     # main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
 
     # EXP_DIR = "results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-21-41-17"
-    # FIT_FUNC = power_law_offset
     # APPROX_FUNC = adam_expavgsq
+    # FIT_FUNC = power_law_offset
     # main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
