@@ -20,7 +20,7 @@ def plot(ax, x, y, checkpoint, label_data=True):
     ax.vlines(
         # h_0 = 0.5, beta_2 = 1-1e-5, batch_size = 50, iters per epoch = 50k/50 = 1k
         0.5*(1-1e-5)**(int(checkpoint)*1000), y.min(), y.max(), linewidth=5, linestyle="--",
-        color="black", label=r"$\mathbf{h}_0 \cdot \beta_2^t$" if label_data else None
+        color="black", label=r"$s_0 \cdot \beta_2^t$" if label_data else None
     )
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -51,7 +51,7 @@ def main(exp_dir, approx_func, data_samples, hutchinson_samples, nrows, ncols):
         os.listdir(save_dir)
     ))[-axs.size:]
     for i, (fn, ax) in enumerate(zip(fns, axs.flatten())):
-        _, model, optimizer, _, _ = loadcheckpoint(f"{exp_dir}/{fn}", device="cuda")
+        _, model, optimizer, _, _ = loadcheckpoint(f"{exp_dir}/{fn}", device="cpu")
         model.eval()
         approx = approx_func(optimizer).to("cpu")
         hess_diag = torch.load(f"{save_dir}/{fn}", map_location="cpu")

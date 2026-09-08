@@ -40,15 +40,6 @@ def plot(ax, x, y, checkpoint, fit_func, label_data=True):
     ax.tick_params(axis="both", which="major", labelsize=15)
     ax.set_title(f"Checkpoint {checkpoint}", fontsize=20)
 
-def adam_expavg(optimizer):
-    out = torch.cat([
-        optimizer.state[param].get("exp_avg", torch.zeros_like(param.data)).abs().flatten()
-        for group in optimizer.param_groups
-        for param in group["params"]
-        if param.requires_grad
-    ])
-    return out
-
 def adam_expavgsq(optimizer):
     out = torch.cat([
         # Can debias but it barely changes anything
@@ -77,9 +68,9 @@ def main(exp_dir, approx_func, data_samples, hutchinson_samples, fit_func, nrows
 
     fns = sorted(os.listdir(save_dir))[-axs.size:]
     for i, (fn, ax) in enumerate(zip(fns, axs.flatten())):
-        _, model, optimizer, _, _ = loadcheckpoint(f"{exp_dir}/{fn}", device="cuda")
+        _, model, optimizer, _, _ = loadcheckpoint(f"{exp_dir}/{fn}", device="cpu")
         model.eval()
-        approx = approx_func(optimizer).to("cpu")
+        approx = approx_func(optimizer)
         hess_diag = torch.load(f"{save_dir}/{fn}", map_location="cpu")
         ckpt = re.search(r"checkpoint(\d+)\.pt", fn).group(1)
         plot(
