@@ -7,6 +7,8 @@ optimizer=adam
 epochs=200
 device=cuda  # cpu/cuda/cuda:X
 lr=0.002
+momentum=0.9
+momentum_hess=0.95
 wdecay=2e-4
 tbatch=50
 vbatch=50
@@ -18,5 +20,6 @@ savedir=../results/${dataset}/${model}/${optimizer}w/seed=${seed}/${ts}
 mkdir -p ${savedir}
 python -u train.py ${model} ${dataset} -opt ${optimizer} -s $seed -dd ${datadir} \
     -sd ${savedir} -lr ${lr} -e ${epochs} --weight-decay ${wdecay} \
+    --momentum ${momentum} --momentum_hess ${momentum_hess} \
     --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
     --tvsplit ${split} |& tee -a ${savedir}/stdout.log

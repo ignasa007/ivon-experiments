@@ -303,6 +303,7 @@ def get_optimizer(args, model):
         return torch.optim.Adam(
             model.parameters(),
             lr=args.learning_rate,
+            betas=(args.momentum, args.momentum_hess),
             weight_decay=args.weight_decay,
             decoupled_weight_decay=not args.coupled_wd,
         )
