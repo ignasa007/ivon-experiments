@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 
 dirs = [
     ("results/cifar10/resnet20/adam/seed=0/2026-09-02-17-15-51", "Adam"),   # Adam with AdamW settings
-    ("results/cifar10/resnet20/adam/seed=0/2026-09-08-16-35-55", r"Adam ($\beta=0.95$)"),   # Adam with \beta_2=0.95
+    ("results/cifar10/resnet20/adam/seed=0/2026-09-08-16-35-55", r"Adam ($\beta_2=0.95$)"),   # Adam with \beta_2=0.95
     ("results/cifar10/resnet20/adamw/seed=0/2026-08-27-21-41-19", "AdamW"), # AdamW with IVON-paper settings
-    ("results/cifar10/resnet20/adamw/seed=0/2026-09-08-16-35-50", r"AdamW ($\beta=0.95$)"), # AdamW with \beta_2=0.95
+    ("results/cifar10/resnet20/adamw/seed=0/2026-09-08-16-35-50", r"AdamW ($\beta_2=0.95$)"), # AdamW with \beta_2=0.95
     # ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12", "IVON-Price"),   # Algo 1 in https://arxiv.org/pdf/2402.17641
     # ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-38-47", "W/o Riemannian Correction"),    # Removed Riemannian GD term (line 5, in red)
     # ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-39-50", "W/o Curvature Accumulation"),   # Removed second term in line 5, based on the assumption that ~1 β2 => update is h <- β2 h
