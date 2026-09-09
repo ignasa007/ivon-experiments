@@ -101,6 +101,9 @@ if __name__ == "__main__":
     EXP_DIR = "results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12"
     main(EXP_DIR, DATA_SAMPLES, HUTCHINSON_SAMPLES, overwrite=False)
 
+    EXP_DIR = "results/cifar10/resnet20/ivadam-coupled-atmean/seed=0/2026-09-08-11-35-14"
+    main(EXP_DIR, DATA_SAMPLES, HUTCHINSON_SAMPLES, overwrite=False)
+    
     EXP_DIR = "results/cifar10/resnet20/ivadam-decoupled-atmean/seed=0/2026-09-02-16-19-40"
     main(EXP_DIR, DATA_SAMPLES, HUTCHINSON_SAMPLES, overwrite=False)
 

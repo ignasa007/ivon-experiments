@@ -98,15 +98,25 @@ if __name__ == "__main__":
     FIT_FUNC = power_law_offset
     main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
 
+    EXP_DIR = "results/cifar10/resnet20/adam/seed=0/2026-09-08-16-35-55"
+    APPROX_FUNC = adam_expavgsq
+    FIT_FUNC = power_law_offset
+    main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
+
     EXP_DIR = "results/cifar10/resnet20/adamw/seed=0/2026-08-27-21-41-19"
     APPROX_FUNC = adam_expavgsq
     FIT_FUNC = power_law_offset
     main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
 
-    EXP_DIR = "results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12"
-    APPROX_FUNC = ivon_hess
-    FIT_FUNC = None
+    EXP_DIR = "results/cifar10/resnet20/adamw/seed=0/2026-09-08-16-35-50"
+    APPROX_FUNC = adam_expavgsq
+    FIT_FUNC = power_law_offset
     main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
+
+    # EXP_DIR = "results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12"
+    # APPROX_FUNC = ivon_hess
+    # FIT_FUNC = None
+    # main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
 
     # EXP_DIR = "results/cifar10/resnet20/ivadam-decoupled-atmean/seed=0/2026-09-02-16-19-40"
     # APPROX_FUNC = adam_expavgsq
