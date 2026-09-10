@@ -10,7 +10,7 @@ seed=$3
 
 epochs=${epochs:-200}
 device=${device:-cuda}  # cpu/cuda/cuda:X
-lr=${lr:0.002}
+lr=${lr:-0.002}
 lr_final=${lr_final:-0.0}
 momentum=${momentum:-0.9}
 momentum_hess=${momentum_hess:-0.999}
