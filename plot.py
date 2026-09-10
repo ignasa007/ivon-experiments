@@ -1,26 +1,31 @@
 from os.path import basename, splitext
 import inspect
+import math
 
 import pandas as pd
 import matplotlib.pyplot as plt
 
 
 dirs = [
-    ("results/cifar10/resnet20/adam/seed=0/2026-09-02-17-15-51", "Adam"),   # Adam with AdamW settings
-    ("results/cifar10/resnet20/adam/seed=0/2026-09-08-16-35-55", r"Adam ($\beta_2=0.95$)"),   # Adam with \beta_2=0.95
-    ("results/cifar10/resnet20/adamw/seed=0/2026-08-27-21-41-19", "AdamW"), # AdamW with IVON-paper settings
-    ("results/cifar10/resnet20/adamw/seed=0/2026-09-08-16-35-50", r"AdamW ($\beta_2=0.95$)"), # AdamW with \beta_2=0.95
-    # ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12", "IVON-Price"),   # Algo 1 in https://arxiv.org/pdf/2402.17641
-    # ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-38-47", "W/o Riemannian Correction"),    # Removed Riemannian GD term (line 5, in red)
-    # ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-39-50", "W/o Curvature Accumulation"),   # Removed second term in line 5, based on the assumption that ~1 β2 => update is h <- β2 h
-    # ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-57-06", "W/o WD in ELBO Curvature"),     # Removed δ from sampling stdev, step-size rescaling, and denom in lines in 7 and 8 -- idea being it is << h
-    # ("results/cifar10/resnet20/ivadam-decoupled-atmean/seed=0/2026-09-02-16-19-40", "IVAdam@mean"), # IVAdam without sampling
-    # ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-21-41-17", r"IVAdam ($\eta=2\cdot 10^{-3}, \delta=2\cdot 10^{-4}$)"), # IVAdam with step-size 2e-3
-    # ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-23-29-39", r"IVAdam ($\eta=2\cdot 10^{-2}, \delta=2\cdot 10^{-4}$)"), # IV Adam with step-size 2e-2
-    # ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-23-30-31", r"IVAdam ($\eta=2\cdot 10^{-1}, \delta=2\cdot 10^{-4}$)"), # IV Adam with step-size 2e-1
+    ("results/cifar10/resnet20/adam/seed=0/2026-09-02-17-15-51", "Adam"),
+    ("results/cifar10/resnet20/adam/seed=0/2026-09-08-16-35-55", r"Adam ($\beta_2=0.95$)"),
+    ("results/cifar10/resnet20/adam/seed=0/2026-09-09-16-11-04", r"Adam ($\eta_{\min}=0.1\cdot\eta_{\max}$)"),
+    ("results/cifar10/resnet20/adamw/seed=0/2026-08-27-21-41-19", "AdamW"),
+    ("results/cifar10/resnet20/adamw/seed=0/2026-09-08-16-35-50", r"AdamW ($\beta_2=0.95$)"),
+    ("results/cifar10/resnet20/adamw/seed=0/2026-09-08-16-35-50", r"AdamW ($\eta_{\min}=0.1\cdot\eta_{\max}$)"),
+    ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12", "IVON-Price"),
+    ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-38-47", "W/o Riemannian Correction"),
+    ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-39-50", "W/o Curvature Accumulation"),
+    ("results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-11-57-06", "W/o WD in ELBO Curvature"),
+    ("results/cifar10/resnet20/ivadam-decoupled-atmean/seed=0/2026-09-02-16-19-40", "VAdam@mean"),
+    ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-21-41-17", r"VAdam ($\eta_{\max}=2\cdot 10^{-3}, \delta=2\cdot 10^{-4}$)"),
+    ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-23-29-39", r"VAdam ($\eta_{\max}=2\cdot 10^{-2}, \delta=2\cdot 10^{-4}$)"),
+    ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-23-30-31", r"VAdam ($\eta_{\max}=2\cdot 10^{-1}, \delta=2\cdot 10^{-4}$)"),
 ]
+
 col = "acc"
 linestyles = ["-", "-.", "--", ":"]
+linestyles = (linestyles * math.ceil(len(dirs)/len(linestyles)))[:len(dirs)]
 
 fig, axs = plt.subplots(1, 2, figsize=(7.2*2, 4.8))
 

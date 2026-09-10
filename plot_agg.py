@@ -1,6 +1,6 @@
-import os
 from os.path import basename, splitext
 import inspect
+import math
 
 import numpy as np
 import pandas as pd
@@ -30,8 +30,10 @@ setups = [
         "results/cifar10/resnet20/perturbedsgd/seed=4/2026-09-08-01-21-36",
     ], "Perturbed SGD"),
 ]
-linestyles = ["-", "-.", "--", ":"]
+
 col = "acc"
+linestyles = ["-", "-.", "--", ":"]
+linestyles = (linestyles * math.ceil(len(setups)/len(linestyles)))[:len(setups)]
 
 fig, axs = plt.subplots(1, 2, figsize=(7.2*2, 4.8))
 

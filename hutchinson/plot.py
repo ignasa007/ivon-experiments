@@ -91,39 +91,34 @@ if __name__ == "__main__":
 
     DATA_SAMPLES = 5000
     HUTCHINSON_SAMPLES = 250
+
     NROWS, NCOLS = 2, 3
-
-    EXP_DIR = "results/cifar10/resnet20/adam/seed=0/2026-09-02-17-15-51"
     APPROX_FUNC = adam_expavgsq
     FIT_FUNC = power_law_offset
-    main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
 
-    EXP_DIR = "results/cifar10/resnet20/adam/seed=0/2026-09-08-16-35-55"
-    APPROX_FUNC = adam_expavgsq
-    FIT_FUNC = power_law_offset
-    main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
+    EXP_DIRS = [
+        "results/cifar10/resnet20/adam/seed=0/2026-09-02-17-15-51",                     # Adam with AdamW (default) settings as in IVON paper
+        "results/cifar10/resnet20/adam/seed=0/2026-09-08-16-35-55",                     # Adam with \beta_2 = 0.95
+        "results/cifar10/resnet20/adam/seed=0/2026-09-09-16-11-04",                     # Adam with cosine decay to \eta_{\min} = 0.1 * \eta_{\max}
+        "results/cifar10/resnet20/adam/seed=1/2026-09-09-22-11-39",
+        "results/cifar10/resnet20/adam/seed=2/2026-09-09-22-12-17",
+        "results/cifar10/resnet20/adam/seed=3/2026-09-09-22-12-19",
+        "results/cifar10/resnet20/adam/seed=4/2026-09-09-22-12-21",
+        "results/cifar10/resnet20/adamw/seed=0/2026-08-27-21-41-19",                    # AdamW with IVON paper (default) settings
+        "results/cifar10/resnet20/adamw/seed=0/2026-09-08-16-35-50",                    # AdamW with \beta_2 = 0.95
+        "results/cifar10/resnet20/adamw/seed=0/2026-09-09-16-11-13",                    # AdamW with cosine decay to \eta_{\min} = 0.1 * \eta_{\max}
+        "results/cifar10/resnet20/adamw/seed=1/2026-09-10-13-11-51",
+        "results/cifar10/resnet20/adamw/seed=2/2026-09-10-13-12-26",
+        "results/cifar10/resnet20/adamw/seed=3/2026-09-10-13-12-27",
+        "results/cifar10/resnet20/adamw/seed=4/2026-09-10-13-12-30",
+        "results/cifar10/resnet20/ivadam-coupled-atmean/seed=0/2026-09-08-11-35-14",    # VAdam with AdamW settings in IVON paper
+        "results/cifar10/resnet20/ivadam-decoupled-atmean/seed=0/2026-09-02-16-19-40",  # VAdam, but with weight decay not included in first-moment -- not truly decoupled
+        "results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-21-41-17",         # VAdam with decoupled weight decay and sampling
+    ]
 
-    EXP_DIR = "results/cifar10/resnet20/adamw/seed=0/2026-08-27-21-41-19"
-    APPROX_FUNC = adam_expavgsq
-    FIT_FUNC = power_law_offset
-    main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
+    for EXP_DIR in EXP_DIRS:
+        main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
 
-    EXP_DIR = "results/cifar10/resnet20/adamw/seed=0/2026-09-08-16-35-50"
-    APPROX_FUNC = adam_expavgsq
-    FIT_FUNC = power_law_offset
-    main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
-
-    # EXP_DIR = "results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12"
-    # APPROX_FUNC = ivon_hess
-    # FIT_FUNC = None
-    # main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
-
-    # EXP_DIR = "results/cifar10/resnet20/ivadam-decoupled-atmean/seed=0/2026-09-02-16-19-40"
-    # APPROX_FUNC = adam_expavgsq
-    # FIT_FUNC = power_law_offset
-    # main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
-
-    # EXP_DIR = "results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-21-41-17"
-    # APPROX_FUNC = adam_expavgsq
-    # FIT_FUNC = power_law_offset
-    # main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
+    # IVON-Price
+    EXP_DIR = "results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12"
+    main(EXP_DIR, ivon_hess, DATA_SAMPLES, HUTCHINSON_SAMPLES, None, NROWS, NCOLS)
