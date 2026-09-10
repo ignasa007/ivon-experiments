@@ -59,7 +59,7 @@ def main(exp_dir, data_samples, hutchinson_samples, overwrite=False):
     _, train_loader = TRAINDATALOADERS["cifar10"](
         data_dir="./datasets", train_val_split=1-data_samples/CIFAR10Info.counts["train"],
         # Batch size is memory-bound
-        workers=1, pin_memory=True, tbatch=50, vbatch=2000
+        workers=1, pin_memory=True, tbatch=50, vbatch=2500
     )
 
     matches_left = 6

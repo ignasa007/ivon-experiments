@@ -66,7 +66,10 @@ def main(exp_dir, approx_func, data_samples, hutchinson_samples, fit_func, nrows
         axs = np.array((axs,))
     axs = axs.reshape((nrows, ncols))
 
-    fns = sorted(os.listdir(save_dir))[-axs.size:]
+    fns = sorted(filter(
+        lambda fn: re.search(r"checkpoint(\d+)\.pt", fn) is not None,
+        os.listdir(save_dir)
+    ))[-axs.size:]
     for i, (fn, ax) in enumerate(zip(fns, axs.flatten())):
         _, model, optimizer, _, _ = loadcheckpoint(f"{exp_dir}/{fn}", device="cpu")
         model.eval()
@@ -118,7 +121,3 @@ if __name__ == "__main__":
 
     for EXP_DIR in EXP_DIRS:
         main(EXP_DIR, APPROX_FUNC, DATA_SAMPLES, HUTCHINSON_SAMPLES, FIT_FUNC, NROWS, NCOLS)
-
-    # IVON-Price
-    EXP_DIR = "results/cifar10/resnet20/ivon-price/seed=0/2026-08-18-10-34-12"
-    main(EXP_DIR, ivon_hess, DATA_SAMPLES, HUTCHINSON_SAMPLES, None, NROWS, NCOLS)
