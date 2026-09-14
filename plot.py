@@ -21,6 +21,8 @@ dirs = [
     ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-21-41-17", r"VAdam ($\eta_{\max}=2\cdot 10^{-3}, \delta=2\cdot 10^{-4}$)"),
     ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-23-29-39", r"VAdam ($\eta_{\max}=2\cdot 10^{-2}, \delta=2\cdot 10^{-4}$)"),
     ("results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-23-30-31", r"VAdam ($\eta_{\max}=2\cdot 10^{-1}, \delta=2\cdot 10^{-4}$)"),
+    ("results/cifar10/resnet20/sfrmsprop/seed=0/2026-09-14-12-56-16", r"SF-RMSProp ($\eta_{\max}=0.02$)"),
+    ("results/cifar10/resnet20/sfrmsprop/seed=0/2026-09-15-04-11-16", r"SF-RMSProp ($\eta_{\max}=0.005$)")
 ]
 
 col = "acc"

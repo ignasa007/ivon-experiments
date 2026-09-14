@@ -104,6 +104,8 @@ if __name__ == "__main__":
         "results/cifar10/resnet20/ivadam-coupled-atmean/seed=0/2026-09-08-11-35-14",    # VAdam with AdamW settings in IVON paper
         "results/cifar10/resnet20/ivadam-decoupled-atmean/seed=0/2026-09-02-16-19-40",  # VAdam, but with weight decay not included in first-moment -- not truly decoupled
         "results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-21-41-17",         # VAdam with decoupled weight decay and sampling
+        "results/cifar10/resnet20/sfrmsprop/seed=0/2026-09-14-12-56-16",                # Square-root-free RMSProp with lr=0.02
+        "results/cifar10/resnet20/sfrmsprop/seed=0/2026-09-15-04-11-16",                # Square-root-free RMSProp with lr=0.005
     ]
 
     for EXP_DIR in EXP_DIRS:

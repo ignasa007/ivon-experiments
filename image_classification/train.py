@@ -5,7 +5,7 @@ import torch.nn.functional as nnf
 import sys
 
 sys.path.append("..")
-from optimizers import IVON, IVAdam, PerturbedSGD
+from optimizers import IVON, IVAdam, PerturbedSGD, SFRMSProp
 from common.utils import coro_timer, mkdirp
 from common.models import STANDARDMODELS
 from common.dataloaders import (
@@ -183,11 +183,12 @@ def get_args():
     parser.add_argument("--rescale_lr", action="store_true")
     parser.add_argument("--warmup", default=5, type=int)
     parser.add_argument("--at_mean", action="store_true")
+    parser.add_argument("--eps", default=1e-8, type=float)
     parser.add_argument(
         "-opt",
         "--optimizer",
         default="ivon",
-        choices=["ivon", "sgd", "adam", "adahessian", "ivadam", "perturbedsgd"],
+        choices=["ivon", "sgd", "adam", "adahessian", "ivadam", "perturbedsgd", "sfrmsprop"],
         type=str,
         help="optimizer to use",
     )
@@ -273,6 +274,7 @@ train_functions = {
     "ivon": do_trainbatch_ivon,
     "ivadam": do_trainbatch_ivadam,
     "perturbedsgd": do_trainbatch_ivadam,
+    "sfrmsprop": do_trainbatch,
 }
 
 
@@ -306,6 +308,7 @@ def get_optimizer(args, model):
             betas=(args.momentum, args.momentum_hess),
             weight_decay=args.weight_decay,
             decoupled_weight_decay=not args.coupled_wd,
+            eps=args.eps,
         )
 
     elif args.optimizer == "adahessian":
@@ -313,6 +316,7 @@ def get_optimizer(args, model):
             model.parameters(),
             lr=args.learning_rate,
             weight_decay=args.weight_decay,
+            eps=args.eps,
         )
     
     elif args.optimizer == "ivadam":
@@ -332,6 +336,15 @@ def get_optimizer(args, model):
             betas=(args.momentum, args.momentum_hess),
             weight_decay=args.weight_decay,
             hess_init=args.hess_init,
+        )
+    elif args.optimizer == "sfrmsprop":
+        return SFRMSProp(
+            model.parameters(),
+            lr=args.learning_rate,
+            betas=(args.momentum, args.momentum_hess),
+            weight_decay=args.weight_decay,
+            batch_size=args.tbatch,
+            eps=args.eps,
         )
 
 
