@@ -86,9 +86,7 @@ class PerturbedSGD(Optimizer):
                         0.0, dtype=_get_scalar_dtype(), device="cpu"
                     )
                     # Exponential moving average of gradient values
-                    state["exp_avg"] = torch.zeros_like(
-                        p, memory_format=torch.preserve_format
-                    )
+                    state["exp_avg"] = torch.zeros_like(p)
                 exp_avgs.append(state["exp_avg"])
                 state_steps.append(state["step"])
 

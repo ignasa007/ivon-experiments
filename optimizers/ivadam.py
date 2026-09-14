@@ -103,13 +103,9 @@ class IVAdam(Optimizer):
                         0.0, dtype=_get_scalar_dtype(), device="cpu"
                     )
                     # Exponential moving average of gradient values
-                    state["exp_avg"] = torch.zeros_like(
-                        p, memory_format=torch.preserve_format
-                    )
+                    state["exp_avg"] = torch.zeros_like(p)
                     # Exponential moving average of squared gradient values
-                    state["exp_avg_sq"] = torch.zeros_like(
-                        p, memory_format=torch.preserve_format
-                    )
+                    state["exp_avg_sq"] = torch.zeros_like(p)
                 exp_avgs.append(state["exp_avg"])
                 exp_avg_sqs.append(state["exp_avg_sq"])
                 state_steps.append(state["step"])
@@ -140,7 +136,7 @@ class IVAdam(Optimizer):
                 state_steps,
             )
             
-            adam(
+            driver(
                 params_with_grad,
                 grads,
                 exp_avgs,
@@ -182,7 +178,7 @@ class IVAdam(Optimizer):
                     if clear_data:
                         del state["param_data"]
 
-def _single_tensor_adam(
+def _single_tensor(
     params: list[Tensor],
     grads: list[Tensor],
     exp_avgs: list[Tensor],
@@ -227,7 +223,7 @@ def _single_tensor_adam(
             num = exp_avg.add(param, alpha=weight_decay*bias_correction1)
             param.addcdiv_(num, denom, value=step_size)
 
-def _multi_tensor_adam(
+def _multi_tensor(
     params: list[Tensor],
     grads: list[Tensor],
     exp_avgs: list[Tensor],
@@ -275,7 +271,7 @@ def _multi_tensor_adam(
             nums = torch._foreach_addcmul(exp_avgs, params, bias_correction1, weight_decay)
             torch._foreach_addcdiv_(params, nums, denoms, step_sizes)
 
-def adam(
+def driver(
     params: list[Tensor],
     grads: list[Tensor],
     exp_avgs: list[Tensor],
@@ -293,9 +289,9 @@ def adam(
         params, differentiable=False, use_fused=False
     )
     if foreach is None:
-        func = _single_tensor_adam
+        func = _single_tensor
     else:
-        func = _multi_tensor_adam
+        func = _multi_tensor
 
     func(
         params,
