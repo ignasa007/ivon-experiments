@@ -460,18 +460,8 @@ if __name__ == "__main__":
         scheduler.step()
         log_ece.throw(StopIteration)
         # update lr scheduler and decay
-        # save checkpoint
-        savecheckpoint(
-            pjoin(args.save_dir, "checkpoint.pt"),
-            args.arch,
-            modelargs,
-            modelkwargs,
-            model,
-            optimizer,
-            scheduler,
-        )
 
-        checkpoint_epochs = [1, 2, 5, 10, 20, 30, 40, 50, 75, 100, 150, 200]
+        checkpoint_epochs = [40, 50, 75, 100, 150, 200]
         if e+1 in checkpoint_epochs:
             savecheckpoint(
                 pjoin(args.save_dir, "checkpoint%03d.pt" % (e+1)),
