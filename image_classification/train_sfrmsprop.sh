@@ -10,10 +10,10 @@ seed=$3
 
 epochs=${epochs:-200}
 device=${device:-cuda}
-lr=${lr:-0.02}
+lr=${lr:-0.005}
 lr_final=${lr_final:-0.0}
 momentum=${momentum:-0.9}
-momentum_hess=${momentum_hess:-0.9999}
+momentum_hess=${momentum_hess:-0.999}
 wdecay=${wdecay:-3e-4}
 eps=${wdecay:-5e-5}
 tbatch=${tbatch:-50}

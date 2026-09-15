@@ -18,7 +18,7 @@ def plot(ax, x, y, checkpoint, label_data=True):
     x, y = x[mask], y[mask]
     ax.scatter(x, y, s=1, color="cornflowerblue", label="Data" if label_data else None)
     ax.vlines(
-        # h_0 = 0.5, beta_2 = 1-1e-5, batch_size = 50, iters per epoch = 50k/50 = 1k
+        # h_0 = 0.5, beta_2 = 1-1e-5, batch_size = 50 => iters per epoch = 50k/50 = 1k
         0.5*(1-1e-5)**(int(checkpoint)*1000), y.min(), y.max(), linewidth=5, linestyle="--",
         color="black", label=r"$s_0 \cdot \beta_2^t$" if label_data else None
     )
