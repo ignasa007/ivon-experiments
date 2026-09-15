@@ -74,6 +74,10 @@ def main(exp_dir, approx_func, data_samples, hutchinson_samples, fit_func, nrows
         lambda fn: re.search(r"checkpoint(\d+)\.pt", fn) is not None,
         os.listdir(save_dir)
     ))[-axs.size:]
+    if len(fns) == 0:
+        print(f"{save_dir} contains no checkpoints; skipping")
+        return
+
     for i, (fn, ax) in enumerate(zip(fns, axs.flatten())):
         _, model, optimizer, _, _ = loadcheckpoint(f"{exp_dir}/{fn}", device="cpu")
         model.eval()
