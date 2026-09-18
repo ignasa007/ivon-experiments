@@ -14,21 +14,35 @@ setups = [
         "results/cifar10/resnet20/ivon-price/seed=2/2026-09-06-23-21-11",
         "results/cifar10/resnet20/ivon-price/seed=3/2026-09-06-23-21-25",
         "results/cifar10/resnet20/ivon-price/seed=4/2026-09-06-23-21-38",
-    ], "IVON-Price"),
-    # ([
-    #     "results/cifar10/resnet20/ivon-gradsq/seed=0/2026-09-06-23-23-29",
-    #     "results/cifar10/resnet20/ivon-gradsq/seed=3/2026-09-07-01-42-24",
-    #     "results/cifar10/resnet20/ivon-gradsq/seed=4/2026-09-07-01-35-29",
-    #     "results/cifar10/resnet20/ivon-gradsq/seed=2/2026-09-07-01-37-38",
-    #     "results/cifar10/resnet20/ivon-gradsq/seed=1/2026-09-07-01-34-47",
-    # ], "IVON-Gradsq"),
+    ], "IVON-Price on CIFAR10"),
+    ([
+        "results/cifar10/resnet20/ivon-gradsq/seed=0/2026-09-06-23-23-29",
+        "results/cifar10/resnet20/ivon-gradsq/seed=3/2026-09-07-01-42-24",
+        "results/cifar10/resnet20/ivon-gradsq/seed=4/2026-09-07-01-35-29",
+        "results/cifar10/resnet20/ivon-gradsq/seed=2/2026-09-07-01-37-38",
+        "results/cifar10/resnet20/ivon-gradsq/seed=1/2026-09-07-01-34-47",
+    ], "IVON-Gradsq on CIFAR10"),
     ([
         "results/cifar10/resnet20/perturbedsgd/seed=0/2026-09-08-01-18-29",
         "results/cifar10/resnet20/perturbedsgd/seed=1/2026-09-08-01-19-09",
         "results/cifar10/resnet20/perturbedsgd/seed=2/2026-09-08-01-20-30",
         "results/cifar10/resnet20/perturbedsgd/seed=3/2026-09-08-01-20-48",
         "results/cifar10/resnet20/perturbedsgd/seed=4/2026-09-08-01-21-36",
-    ], "Perturbed SGD"),
+    ], "Perturbed SGD on CIFAR10"),
+    ([
+        "results/cifar100/resnet20/ivon-price/seed=0/2026-09-16-15-17-16",
+        "results/cifar100/resnet20/ivon-price/seed=1/2026-09-16-18-17-40",
+        "results/cifar100/resnet20/ivon-price/seed=2/2026-09-16-21-18-41",
+        "results/cifar100/resnet20/ivon-price/seed=3/2026-09-17-00-13-48",
+        "results/cifar100/resnet20/ivon-price/seed=4/2026-09-17-02-57-23",
+    ], "IVON-Price on CIFAR100"),
+    ([
+        "results/cifar100/resnet20/perturbedsgd/seed=0/2026-09-16-15-18-07",
+        "results/cifar100/resnet20/perturbedsgd/seed=1/2026-09-16-20-48-00",
+        "results/cifar100/resnet20/perturbedsgd/seed=2/2026-09-17-01-03-16",
+        "results/cifar100/resnet20/perturbedsgd/seed=3/2026-09-17-05-02-18",
+        "results/cifar100/resnet20/perturbedsgd/seed=4/2026-09-17-08-13-19",
+    ], "Perturbed SGD on CIFAR100"),
 ]
 
 col = "acc"

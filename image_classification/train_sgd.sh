@@ -6,7 +6,7 @@ optimizer=sgd
 
 dataset=$1  # cifar10/cifar100/tinyimagenet
 model=$2  # resnet20/resnet18wide/preresnet110/densenet121
-seed=${3:-null}
+seed=${3}
 
 epochs=${epochs:-200}
 device=${device:-cuda}
