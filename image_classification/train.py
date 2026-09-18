@@ -326,7 +326,7 @@ def get_optimizer(args, model):
             lr=args.learning_rate,
             betas=(args.momentum, args.momentum_hess),
             weight_decay=args.weight_decay,
-            decoupled_wd=not args.coupled_wd,
+            decoupled_weight_decay=not args.coupled_wd,
         )
     elif args.optimizer == "perturbedsgd":
         return PerturbedSGD(

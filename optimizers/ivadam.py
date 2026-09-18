@@ -18,7 +18,7 @@ class IVAdam(Optimizer):
         lr: float | Tensor = 1e-3,
         betas: tuple[float | Tensor, float | Tensor] = (0.9, 0.999),
         weight_decay: float = 0,
-        decoupled_wd: bool = False, 
+        decoupled_weight_decay: bool = False, 
     ) -> None:
         
         if isinstance(lr, Tensor) and lr.numel() != 1:
@@ -46,7 +46,7 @@ class IVAdam(Optimizer):
             "lr": lr,
             "betas": betas,
             "weight_decay": weight_decay,
-            "decoupled_wd": decoupled_wd,
+            "decoupled_weight_decay": decoupled_weight_decay,
             "ess": ess,
         }
         super().__init__(params, defaults)
@@ -75,7 +75,7 @@ class IVAdam(Optimizer):
     def __setstate__(self, state):
         super().__setstate__(state)
         for group in self.param_groups:
-            group.setdefault("decoupled_wd", False)
+            group.setdefault("decoupled_weight_decay", False)
             for p in group["params"]:
                 p_state = self.state.get(p, [])
                 if len(p_state) != 0 and not torch.is_tensor(p_state["step"]):
@@ -146,7 +146,7 @@ class IVAdam(Optimizer):
                 beta2=beta2,
                 lr=group["lr"],
                 weight_decay=group["weight_decay"],
-                decoupled_wd=group["decoupled_wd"],
+                decoupled_weight_decay=group["decoupled_weight_decay"],
             )
 
         return loss
@@ -189,14 +189,14 @@ def _single_tensor(
     beta2: float | Tensor,
     lr: float | Tensor,
     weight_decay: float,
-    decoupled_wd: bool,
+    decoupled_weight_decay: bool,
 ) -> None:
 
     for param, grad, exp_avg, exp_avg_sq, state_step in zip(
         params, grads, exp_avgs, exp_avg_sqs, state_steps
     ):
 
-        if decoupled_wd or weight_decay == 0:
+        if decoupled_weight_decay or weight_decay == 0:
             # IVON-like implementation, where grad of log-prior is not included in the first moment
             # https://arxiv.org/pdf/2402.17641, Algorithm 1, Lines 4 and 7
             exp_avg.lerp_(grad, weight=1-beta1)
@@ -217,7 +217,7 @@ def _single_tensor(
         denom = (exp_avg_sq/bias_correction2).sqrt().add(weight_decay)
         
         step_size = -lr/bias_correction1
-        if not decoupled_wd or weight_decay == 0:
+        if not decoupled_weight_decay or weight_decay == 0:
             param.addcdiv_(exp_avg, denom, value=step_size)
         else:
             num = exp_avg.add(param, alpha=weight_decay*bias_correction1)
@@ -234,7 +234,7 @@ def _multi_tensor(
     beta2: float | Tensor,
     lr: float | Tensor,
     weight_decay: float,
-    decoupled_wd: bool,
+    decoupled_weight_decay: bool,
 ) -> None:
     
     grouped_tensors = Optimizer._group_tensors_by_device_and_dtype(
@@ -243,7 +243,7 @@ def _multi_tensor(
 
     for (params, grads, exp_avgs, exp_avg_sqs, state_steps), _ in grouped_tensors.values():
 
-        if decoupled_wd or weight_decay == 0:
+        if decoupled_weight_decay or weight_decay == 0:
             torch._foreach_lerp_(exp_avgs, grads, weight=1-beta1)
         else:
             torch._foreach_lerp_(
@@ -265,7 +265,7 @@ def _multi_tensor(
         torch._foreach_add_(denoms, weight_decay)
 
         step_sizes = torch.Tensor([-lr/bc for bc in bias_correction1])
-        if not decoupled_wd or weight_decay == 0:
+        if not decoupled_weight_decay or weight_decay == 0:
             torch._foreach_addcdiv_(params, exp_avgs, denoms, step_sizes)
         else:
             nums = torch._foreach_addcmul(exp_avgs, params, bias_correction1, weight_decay)
@@ -282,7 +282,7 @@ def driver(
     beta2: float | Tensor,
     lr: float | Tensor,
     weight_decay: float,
-    decoupled_wd: bool,
+    decoupled_weight_decay: bool,
 ) -> None:
 
     _, foreach = _default_to_fused_or_foreach(
@@ -303,5 +303,5 @@ def driver(
         beta2=beta2,
         lr=lr,
         weight_decay=weight_decay,
-        decoupled_wd=decoupled_wd,
+        decoupled_weight_decay=decoupled_weight_decay,
     )
