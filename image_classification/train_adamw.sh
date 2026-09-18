@@ -24,6 +24,6 @@ savedir=../results/${dataset}/${model}/${optimizer}w/seed=${seed}/${ts}
 mkdir -p ${savedir}
 python -u train.py ${model} ${dataset} -opt ${optimizer} -s $seed -dd ${datadir} -sd ${savedir} \
     -lr ${lr} --lr_final ${lr_final} --momentum ${momentum} --momentum_hess ${momentum_hess} \
-    --weight-decay ${wdecay} --coupled_wd --eps ${eps} --epochs ${epochs} \
+    --weight-decay ${wdecay} --coupled --eps ${eps} --epochs ${epochs} \
     --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
     --tvsplit ${split} |& tee -a ${savedir}/stdout.log

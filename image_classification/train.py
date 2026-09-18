@@ -5,7 +5,7 @@ import torch.nn.functional as nnf
 import sys
 
 sys.path.append("..")
-from optimizers import IVON, IVAdam, PerturbedSGD, SFRMSProp
+from optimizers import IVON, IVAdam, PerturbedSGD, PerturbedSGDApprox, SFRMSProp
 from common.utils import coro_timer, mkdirp
 from common.models import STANDARDMODELS
 from common.dataloaders import (
@@ -177,7 +177,7 @@ def get_args():
     parser.add_argument("--momentum_hess", default=0.999, type=float)
     parser.add_argument("--hess_init", default=1.0, type=float)
     parser.add_argument("--ess", default=5e4, type=float)
-    parser.add_argument("--coupled_wd", action="store_true")
+    parser.add_argument("--coupled", action="store_true")
     parser.add_argument("--bias_corr", action="store_true")
     parser.add_argument("--clip_radius", default=torch.inf, type=float)
     parser.add_argument("--rescale_lr", action="store_true")
@@ -188,7 +188,10 @@ def get_args():
         "-opt",
         "--optimizer",
         default="ivon",
-        choices=["ivon", "sgd", "adam", "adahessian", "ivadam", "perturbedsgd", "sfrmsprop"],
+        choices=[
+            "ivon", "sgd", "adam", "adahessian",
+            "ivadam", "perturbedsgd", "perturbedsgd-approx", "sfrmsprop"
+        ],
         type=str,
         help="optimizer to use",
     )
@@ -274,6 +277,7 @@ train_functions = {
     "ivon": do_trainbatch_ivon,
     "ivadam": do_trainbatch_ivadam,
     "perturbedsgd": do_trainbatch_ivadam,
+    "perturbedsgd-approx": do_trainbatch,
     "sfrmsprop": do_trainbatch,
 }
 
@@ -307,7 +311,7 @@ def get_optimizer(args, model):
             lr=args.learning_rate,
             betas=(args.momentum, args.momentum_hess),
             weight_decay=args.weight_decay,
-            decoupled_weight_decay=not args.coupled_wd,
+            decoupled_weight_decay=not args.coupled,
             eps=args.eps,
         )
 
@@ -326,10 +330,19 @@ def get_optimizer(args, model):
             lr=args.learning_rate,
             betas=(args.momentum, args.momentum_hess),
             weight_decay=args.weight_decay,
-            decoupled_weight_decay=not args.coupled_wd,
+            decoupled_weight_decay=not args.coupled,
         )
     elif args.optimizer == "perturbedsgd":
         return PerturbedSGD(
+            model.parameters(),
+            ess=args.ess,
+            lr=args.learning_rate,
+            betas=(args.momentum, args.momentum_hess),
+            weight_decay=args.weight_decay,
+            hess_init=args.hess_init,
+        )
+    elif args.optimizer == "perturbedsgd-approx":
+        return PerturbedSGDApprox(
             model.parameters(),
             ess=args.ess,
             lr=args.learning_rate,

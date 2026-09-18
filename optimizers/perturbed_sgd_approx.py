@@ -9,7 +9,7 @@ from torch.optim.optimizer import (
 )
 
 
-class PerturbedSGD(Optimizer):
+class PerturbedSGDApprox(Optimizer):
     def __init__(
         self,
         params: ParamsT,
@@ -129,30 +129,9 @@ class PerturbedSGD(Optimizer):
                 torch._foreach_mul_(params, [1+rescaled_lr*weight_decay for rescaled_lr in rescaled_lrs])
                 bias_correction1 = [1-torch.as_tensor(beta1, device=params[0].device)**_get_value(step) for step in state_steps]
                 torch._foreach_addcdiv_(params, exp_avgs, bias_correction1, rescaled_lrs)
-
-        return loss
-
-    def store_param_data(self):
-        for group in self.param_groups:
-            for p in group["params"]:
-                if p.requires_grad:
-                    state = self.state[p]
-                    state["param_data"] = p.data
-
-    def sample_param_data(self):
-        for group in self.param_groups:
-            for p in group["params"]:
-                if p.requires_grad:
-                    state = self.state[p]
-                    p.data = state["param_data"] + torch.randn_like(p.data) / (
-                        group["ess"] * group["hess_init"] * group["betas"][1]**state["step"]
+                for param, step in zip(params, state_steps):
+                    param -= lr * torch.randn_like(param) / (
+                        group["ess"] * group["hess_init"] * group["betas"][1]**(step-1)
                     ).sqrt()
 
-    def restore_param_data(self, clear_data: bool = False):
-        for group in self.param_groups:
-            for p in group["params"]:
-                if p.requires_grad:
-                    state = self.state[p]
-                    p.data = state["param_data"]
-                    if clear_data:
-                        del state["param_data"]
+        return loss

@@ -33,7 +33,7 @@ case ${dataset} in
 esac
 
 opt_name="${optimizer}"
-if [ -n "${coupled_wd+x}" ]; then
+if [ -n "${coupled+x}" ]; then
     opt_name="${opt_name}-coupled"
 else
     opt_name="${opt_name}-decoupled"
@@ -45,6 +45,6 @@ savedir=../results/${dataset}/${model}/${opt_name}/seed=${seed}/${ts}
 mkdir -p ${savedir}
 python -u train.py ${model} ${dataset} -opt ${optimizer} -s ${seed} -dd ${datadir} -sd ${savedir} \
 	-lr ${lr} --lr_final ${lr_final} --momentum ${momentum} --momentum_hess ${momentum_hess} \
-	--weight-decay ${wdecay} ${coupled_wd:+--coupled_wd} --ess ${ess} ${at_mean:+--at_mean} \
+	--weight-decay ${wdecay} ${coupled:+--coupled} --ess ${ess} ${at_mean:+--at_mean} \
 	--epochs ${epochs} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
 	--tvsplit ${split} |& tee -a ${savedir}/stdout.log
