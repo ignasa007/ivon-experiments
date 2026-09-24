@@ -132,27 +132,50 @@ class PerturbedSGD(Optimizer):
 
         return loss
 
+    @torch.no_grad()
     def store_param_data(self):
         for group in self.param_groups:
             for p in group["params"]:
                 if p.requires_grad:
                     state = self.state[p]
-                    state["param_data"] = p.data
+                    state["data"] = p.data.clone()
 
+    # @torch.no_grad()
+    # def sample_param_data(self):
+    #     for group in self.param_groups:
+    #         for p in group["params"]:
+    #             if p.requires_grad:
+    #                 state = self.state[p]
+    #                 p.data = state["data"] + torch.randn_like(p.data) / (
+    #                     group["ess"] * group["hess_init"] * group["betas"][1]**state["step"]
+    #                 ).sqrt()
+
+    # NOTE: ~15% faster; slightly different numbers, but because of GPU
+    @torch.no_grad()
     def sample_param_data(self):
         for group in self.param_groups:
-            for p in group["params"]:
-                if p.requires_grad:
-                    state = self.state[p]
-                    p.data = state["param_data"] + torch.randn_like(p.data) / (
-                        group["ess"] * group["hess_init"] * group["betas"][1]**state["step"]
-                    ).sqrt()
+            params = [p for p in group["params"] if p.requires_grad]
+            if not params:
+                continue
+            params_data = [self.state[p]["data"] for p in params]
+            # We can do-away with this if we're using only one MC sample
+            torch._foreach_copy_(params, params_data)
+            noises = [torch.randn_like(p) for p in params]
+            scale = float(
+                group["ess"] * group["hess_init"] *
+                # Assumption: state["step"] is the same for all parameters in a group
+                group["betas"][1]**self.state[params[0]]["step"]
+            ) ** (-0.5)
+            torch._foreach_add_(params, noises, alpha=scale)
 
+    @torch.no_grad()
     def restore_param_data(self, clear_data: bool = False):
         for group in self.param_groups:
-            for p in group["params"]:
-                if p.requires_grad:
-                    state = self.state[p]
-                    p.data = state["param_data"]
-                    if clear_data:
-                        del state["param_data"]
+            params = [p for p in group["params"] if p.requires_grad]
+            if not params:
+                continue
+            params_data = [self.state[p]["data"] for p in params]
+            torch._foreach_copy_(params, params_data)
+            if clear_data:
+                for p in params:
+                    del self.state[p]["data"]
