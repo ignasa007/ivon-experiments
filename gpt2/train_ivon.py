@@ -20,7 +20,6 @@ import os
 import time
 import math
 import pickle
-import inspect
 from contextlib import nullcontext
 
 import numpy as np
@@ -29,6 +28,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 
 from model import GPTConfig, GPT
+from ivon import IVON
 
 # -----------------------------------------------------------------------------
 # default config values designed to train a gpt2 (124M) on OpenWebText
@@ -55,23 +55,29 @@ n_head = 12
 n_embd = 768
 dropout = 0.0 # for pretraining 0 is good, for finetuning try 0.1+
 bias = False # do we use bias inside LayerNorm and Linear layers?
-# adamw optimizer
-learning_rate = 6e-4 # max learning rate
+# IVON optimizer
+hess_init = 0.001
+ess = 1e10
+clip_radius = 1e-3
+learning_rate = 300.0 # max learning rate
 max_iters = 600000 # total number of training iterations
-weight_decay = 1e-1
+weight_decay = 1e-6
 beta1 = 0.9
-beta2 = 0.95
+beta2 = 0.99999
 grad_clip = 1.0 # clip gradients at this value, or disable if == 0.0
 # learning rate decay settings
 decay_lr = True # whether to decay the learning rate
 warmup_iters = 2000 # how many steps to warm up for
 lr_decay_iters = 600000 # should be ~= max_iters per Chinchilla
-min_lr = 6e-5 # minimum learning rate, should be ~= learning_rate/10 per Chinchilla
+min_lr = learning_rate / 10 # minimum learning rate, should be ~= learning_rate/10 per Chinchilla
 # DDP settings
 backend = 'nccl' # 'nccl', 'gloo', etc.
 # system
 device = 'cuda' # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1' etc., or try 'mps' on macbooks
-dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32', 'bfloat16', or 'float16', the latter will auto implement a GradScaler
+dtype = 'float32' # 'float32', 'bfloat16', or 'float16', the latter will auto implement a GradScaler
+if dtype == 'bfloat16':
+    if not (torch.cuda.is_available() and torch.cuda.is_bf16_supported()):
+        assert ValueError(f'Cannot use dtype=bfloat16 -- {torch.cuda.is_available()=} and {torch.cuda.is_bf16_supported()=}')
 compile = True # use PyTorch 2.0 to compile the model to be faster
 # -----------------------------------------------------------------------------
 config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
@@ -194,13 +200,15 @@ if block_size < model.config.block_size:
 model.to(device)
 
 # initialize a GradScaler. If enabled=False scaler is a no-op
-scaler = torch.cuda.amp.GradScaler(enabled=(dtype == 'float16'))
+scaler = torch.amp.GradScaler("cuda", enabled=(dtype == 'float16'))
 
 # optimizer
 optim_groups = model.configure_optim_groups(weight_decay)
-fused_available = 'fused' in inspect.signature(torch.optim.AdamW).parameters
-extra_args = dict(fused=True) if fused_available and device_type == 'cuda' else dict()
-optimizer = torch.optim.AdamW(optim_groups, learning_rate, betas=(beta1, beta2), **extra_args)
+assert dtype != "float16" # training in float16 is not tested yet
+optimizer = IVON(
+    optim_groups, learning_rate, ess, hess_init, beta1, beta2, weight_decay,
+    1, clip_radius=clip_radius, sync=ddp
+)
 if init_from == 'resume':
     optimizer.load_state_dict(checkpoint['optimizer'])
 checkpoint = None # free up memory
@@ -275,49 +283,45 @@ while True:
                 "lr": lr,
                 "mfu": running_mfu*100, # convert to percentage
             })
-        if losses['val'] < best_val_loss or always_save_checkpoint:
-            best_val_loss = losses['val']
-            if iter_num > 0:
-                checkpoint = {
-                    'model': raw_model.state_dict(),
-                    'optimizer': optimizer.state_dict(),
-                    'model_args': model_args,
-                    'iter_num': iter_num,
-                    'best_val_loss': best_val_loss,
-                    'config': config,
-                }
-                ckpt_dir = os.path.join(out_dir, wandb_run_name)
-                print(f"saving checkpoint to {ckpt_dir}")
-                os.makedirs(ckpt_dir, exist_ok=True)
-                torch.save(checkpoint, os.path.join(ckpt_dir, 'ckpt.pt'))
+        # if losses['val'] < best_val_loss or always_save_checkpoint:
+        #     best_val_loss = losses['val']
+        #     if iter_num > 0:
+        #         checkpoint = {
+        #             'model': raw_model.state_dict(),
+        #             'optimizer': optimizer.state_dict(),
+        #             'model_args': model_args,
+        #             'iter_num': iter_num,
+        #             'best_val_loss': best_val_loss,
+        #             'config': config,
+        #         }
+        #         ckpt_dir = os.path.join(out_dir, wandb_run_name)
+        #         print(f"saving checkpoint to {ckpt_dir}")
+        #         os.makedirs(ckpt_dir, exist_ok=True)
+        #         torch.save(checkpoint, os.path.join(ckpt_dir, 'ckpt.pt'))
     if iter_num == 0 and eval_only:
         break
 
     # forward backward update, with optional gradient accumulation to simulate larger batch size
     # and using the GradScaler if data type is float16
     for micro_step in range(gradient_accumulation_steps):
-        if ddp:
-            # in DDP training we only need to sync gradients at the last micro step.
-            # the official way to do this is with model.no_sync() context manager, but
-            # I really dislike that this bloats the code and forces us to repeat code
-            # looking at the source of that context manager, it just toggles this variable
-            model.require_backward_grad_sync = (micro_step == gradient_accumulation_steps - 1)
-        with ctx:
-            logits, loss = model(X, Y)
-            loss = loss / gradient_accumulation_steps # scale the loss to account for gradient accumulation
-        # immediately async prefetch next batch while model is doing the forward pass on the GPU
-        X, Y = get_batch('train')
-        # backward pass, with gradient scaling if training in fp16
-        scaler.scale(loss).backward()
-    # clip the gradient
-    if grad_clip != 0.0:
-        scaler.unscale_(optimizer)
-        torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+        with optimizer.sampled_params(train=True):
+            if ddp:
+                # The syncing of gradients is done in the optimizer, so we don't need to sync here
+                model.require_backward_grad_sync = False
+            with ctx:
+                logits, loss = model(X, Y)
+            # immediately async prefetch next batch while model is doing the forward pass on the GPU
+            X, Y = get_batch('train')
+            # backward pass, with gradient scaling if training in fp16
+            scaler.scale(loss).backward()
+            # clip the gradients if desired
+            if grad_clip != 0.0:
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+        optimizer.zero_grad(set_to_none=True)
     # step the optimizer and scaler if training in fp16
     scaler.step(optimizer)
     scaler.update()
-    # flush the gradients as soon as we can, no need for this memory anymore
-    optimizer.zero_grad(set_to_none=True)
 
     # timing and logging
     t1 = time.time()
@@ -325,8 +329,7 @@ while True:
     t0 = t1
     if iter_num % log_interval == 0 and master_process:
         # get loss as float. note: this is a CPU-GPU sync point
-        # scale up to undo the division above, approximating the true total loss (exact would have been a sum)
-        lossf = loss.item() * gradient_accumulation_steps
+        lossf = loss.item()
         if local_iter_num >= 5: # let the training loop settle a bit
             mfu = raw_model.estimate_mfu(batch_size * gradient_accumulation_steps, dt)
             running_mfu = mfu if running_mfu == -1.0 else 0.9*running_mfu + 0.1*mfu

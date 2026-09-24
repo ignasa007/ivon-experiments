@@ -8,10 +8,10 @@ To train GPT-2 models on OpenWebText, follow these steps:
 
 ### 1. Download and Tokenize the OpenWebText Dataset
 
-Run the following command to download and tokenize the OpenWebText dataset:
+Run the following command to download and tokenize the OpenWebText dataset (takes 54GB, remember to change `HF_HOME` to a directory with enough space):
 
 ```bash
-python data/openwebtext/prepare.py
+HF_HOME=~/.cache/huggingface python data/openwebtext/prepare.py
 ```
 
 This will create `train.bin` (~17GB) and `val.bin` (~8.5MB) dataset files in the `data/openwebtext` folder. Alternatively, you can link the `train.bin` and `val.bin` files in an existing nanoGPT repo to this folder.
