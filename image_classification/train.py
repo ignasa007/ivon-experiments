@@ -335,11 +335,12 @@ def get_optimizer(args, model):
     elif args.optimizer == "perturbedsgd":
         return PerturbedSGD(
             model.parameters(),
-            ess=args.ess,
             lr=args.learning_rate,
             betas=(args.momentum, args.momentum_hess),
             weight_decay=args.weight_decay,
+            ess=args.ess,
             hess_init=args.hess_init,
+            clip_radius=args.clip_radius,
         )
     elif args.optimizer == "perturbedsgd-approx":
         return PerturbedSGDApprox(

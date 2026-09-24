@@ -1,3 +1,5 @@
+import math
+
 import torch
 from torch import Tensor
 from torch.optim.optimizer import (
@@ -13,11 +15,12 @@ class PerturbedSGD(Optimizer):
     def __init__(
         self,
         params: ParamsT,
-        ess: float,
         lr: float | Tensor = 1e-3,
         betas: tuple[float | Tensor, float | Tensor] = (0.9, 0.999),
         weight_decay: float = 0,
+        ess: float = None,
         hess_init: float = 0.5,
+        clip_radius: float = torch.inf,
     ) -> None:
         
         if isinstance(lr, Tensor) and lr.numel() != 1:
@@ -30,8 +33,12 @@ class PerturbedSGD(Optimizer):
             raise ValueError(f"Invalid beta parameter at index 1: {betas[1]}")
         if not 0.0 <= weight_decay:
             raise ValueError(f"Invalid weight_decay value: {weight_decay}")
+        if not isinstance(ess, float) or not ess > 0.:
+            raise ValueError(f"Invalid ess value: {ess}")
         if not 0.0 < hess_init:
             raise ValueError(f"Invalid hess_init value: {hess_init}")
+        if not 0.0 < clip_radius:
+            raise ValueError(f"Invalid clip_radius value: {clip_radius}")
         if not (
             (isinstance(betas[0], float) and isinstance(betas[1], float))
             or (isinstance(betas[0], Tensor) and isinstance(betas[1], Tensor))
@@ -49,6 +56,7 @@ class PerturbedSGD(Optimizer):
             "weight_decay": weight_decay,
             "ess": ess,
             "hess_init": hess_init,
+            "clip_radius": clip_radius
         }
         super().__init__(params, defaults)
         self._eager_state_init()
@@ -107,6 +115,8 @@ class PerturbedSGD(Optimizer):
             lr = group["lr"]
             beta1, beta2 = group["betas"]
             weight_decay = group["weight_decay"]
+            hess_init = group["hess_init"]
+            clip_radius = group["clip_radius"]
 
             self._init_group(
                 group,
@@ -124,11 +134,18 @@ class PerturbedSGD(Optimizer):
                 # State management
                 torch._foreach_lerp_(exp_avgs, grads, weight=1-beta1)
                 torch._foreach_add_(state_steps, 1)
-                rescaled_lrs = [-lr / beta2**_get_value(step) for step in state_steps]
-                # Multiplying by 1+rescaled_lr*weight_decay because rescaled_lr = -lr/beta_2^t
-                torch._foreach_mul_(params, [1+rescaled_lr*weight_decay for rescaled_lr in rescaled_lrs])
+                # Computation
                 bias_correction1 = [1-torch.as_tensor(beta1, device=params[0].device)**_get_value(step) for step in state_steps]
-                torch._foreach_addcdiv_(params, exp_avgs, bias_correction1, rescaled_lrs)
+                torch._foreach_lerp_(exp_avgs, grads, weight=1-beta1)
+                updates = torch._foreach_addcmul(exp_avgs, params, bias_correction1, value=weight_decay)
+                # Clamp
+                scalings = [bc1 * beta2**_get_value(step) for bc1, step in zip(bias_correction1, state_steps)]
+                if math.isfinite(clip_radius):
+                    clip_radii = [clip_radius*hess_init*_get_value(scaling) for scaling in scalings]
+                    torch._foreach_clamp_max_(updates, clip_radii)
+                    torch._foreach_clamp_min_(updates, [-1.*clip_radius for clip_radius in clip_radii])
+                # Update
+                torch._foreach_addcdiv_(params, updates, scalings, value=-lr)
 
         return loss
 
@@ -140,17 +157,7 @@ class PerturbedSGD(Optimizer):
                     state = self.state[p]
                     state["data"] = p.data.clone()
 
-    # @torch.no_grad()
-    # def sample_param_data(self):
-    #     for group in self.param_groups:
-    #         for p in group["params"]:
-    #             if p.requires_grad:
-    #                 state = self.state[p]
-    #                 p.data = state["data"] + torch.randn_like(p.data) / (
-    #                     group["ess"] * group["hess_init"] * group["betas"][1]**state["step"]
-    #                 ).sqrt()
-
-    # NOTE: ~15% faster; slightly different numbers, but because of GPU
+    # NOTE: slightly different numbers, but because of GPU
     @torch.no_grad()
     def sample_param_data(self):
         for group in self.param_groups:
