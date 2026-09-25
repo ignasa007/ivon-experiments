@@ -56,7 +56,7 @@ class PerturbedSGD(Optimizer):
             "weight_decay": weight_decay,
             "ess": ess,
             "hess_init": hess_init,
-            "clip_radius": clip_radius
+            "clip_radius": clip_radius,
         }
         super().__init__(params, defaults)
         self._eager_state_init()
@@ -125,21 +125,20 @@ class PerturbedSGD(Optimizer):
                 exp_avgs,
                 state_steps,
             )
-            
+
             grouped_tensors = Optimizer._group_tensors_by_device_and_dtype(
                 [params, grads, exp_avgs, state_steps]
             )
 
             for (params, grads, exp_avgs, state_steps), _ in grouped_tensors.values():
                 # State management
-                torch._foreach_lerp_(exp_avgs, grads, weight=1-beta1)
                 torch._foreach_add_(state_steps, 1)
                 # Computation
-                bias_correction1 = [1-torch.as_tensor(beta1, device=params[0].device)**_get_value(step) for step in state_steps]
                 torch._foreach_lerp_(exp_avgs, grads, weight=1-beta1)
+                bias_correction1 = [1-torch.as_tensor(beta1, device=params[0].device)**_get_value(step) for step in state_steps]
                 updates = torch._foreach_addcmul(exp_avgs, params, bias_correction1, value=weight_decay)
                 # Clamp
-                scalings = [bc1 * beta2**_get_value(step) for bc1, step in zip(bias_correction1, state_steps)]
+                scalings = [bc1 * beta2**step for bc1, step in zip(bias_correction1, state_steps)]
                 if math.isfinite(clip_radius):
                     clip_radii = [clip_radius*hess_init*_get_value(scaling) for scaling in scalings]
                     torch._foreach_clamp_max_(updates, clip_radii)
@@ -168,12 +167,9 @@ class PerturbedSGD(Optimizer):
             # We can do-away with this if we're using only one MC sample
             torch._foreach_copy_(params, params_data)
             noises = [torch.randn_like(p) for p in params]
-            scale = float(
-                group["ess"] * group["hess_init"] *
-                # Assumption: state["step"] is the same for all parameters in a group
-                group["betas"][1]**self.state[params[0]]["step"]
-            ) ** (-0.5)
-            torch._foreach_add_(params, noises, alpha=scale)
+            init_scale, beta2 = group["ess"]*group["hess_init"], group["betas"][1]
+            scales = [(init_scale*beta2**self.state[p]["step"])**(-0.5) for p in params]
+            torch._foreach_addcmul_(params, noises, scales)
 
     @torch.no_grad()
     def restore_param_data(self, clear_data: bool = False):
