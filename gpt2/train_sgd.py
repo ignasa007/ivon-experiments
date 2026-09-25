@@ -28,7 +28,10 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 
 from model import GPTConfig, GPT
-from ivon import IVON
+
+import sys
+sys.path.append("..")
+from optimizers import PerturbedSGD
 
 # -----------------------------------------------------------------------------
 # default config values designed to train a gpt2 (124M) on OpenWebText
@@ -205,9 +208,9 @@ scaler = torch.amp.GradScaler("cuda", enabled=(dtype == 'float16'))
 # optimizer
 optim_groups = model.configure_optim_groups(weight_decay)
 assert dtype != "float16" # training in float16 is not tested yet
-optimizer = IVON(
-    optim_groups, learning_rate, ess, hess_init, beta1, beta2, weight_decay,
-    1, clip_radius=clip_radius, sync=ddp
+optimizer = PerturbedSGD(
+    optim_groups, learning_rate, (beta1, beta2), weight_decay,
+    ess, hess_init, clip_radius
 )
 if init_from == 'resume':
     optimizer.load_state_dict(checkpoint['optimizer'])
@@ -303,26 +306,33 @@ while True:
 
     # forward backward update, with optional gradient accumulation to simulate larger batch size
     # and using the GradScaler if data type is float16
+    optimizer.store_param_data()
     for micro_step in range(gradient_accumulation_steps):
-        with optimizer.sampled_params(train=True):
-            if ddp:
-                # The syncing of gradients is done in the optimizer, so we don't need to sync here
-                model.require_backward_grad_sync = False
-            with ctx:
-                logits, loss = model(X, Y)
-            # immediately async prefetch next batch while model is doing the forward pass on the GPU
-            X, Y = get_batch('train')
-            # backward pass, with gradient scaling if training in fp16
-            scaler.scale(loss).backward()
-            # NOTE: this is clipping the norm of each sample gradient! AdamW code clips the norm of the averaged gradient.
-            # clip the gradients if desired
-            if grad_clip != 0.0:
-                scaler.unscale_(optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
-        optimizer.zero_grad(set_to_none=True)
+        if ddp:
+            # in DDP training we only need to sync gradients at the last micro step.
+            # the official way to do this is with model.no_sync() context manager, but
+            # I really dislike that this bloats the code and forces us to repeat code
+            # looking at the source of that context manager, it just toggles this variable
+            model.require_backward_grad_sync = (micro_step == gradient_accumulation_steps - 1)
+        optimizer.sample_param_data()
+        with ctx:
+            logits, loss = model(X, Y)
+            loss = loss / gradient_accumulation_steps # scale the loss to account for gradient accumulation
+        # immediately async prefetch next batch while model is doing the forward pass on the GPU
+        X, Y = get_batch('train')
+        # backward pass, with gradient scaling if training in fp16
+        scaler.scale(loss).backward()
+    # NOTE: this is clipping the norm of the averaged gradient! IVON code clips the norm of each sample gradient.
+    # clip the gradient
+    if grad_clip != 0.0:    
+        scaler.unscale_(optimizer)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
     # step the optimizer and scaler if training in fp16
+    optimizer.restore_param_data(clear_data=True)
     scaler.step(optimizer)
     scaler.update()
+    # flush the gradients as soon as we can, no need for this memory anymore
+    optimizer.zero_grad(set_to_none=True)
 
     # timing and logging
     t1 = time.time()
@@ -330,7 +340,8 @@ while True:
     t0 = t1
     if iter_num % log_interval == 0 and master_process:
         # get loss as float. note: this is a CPU-GPU sync point
-        lossf = loss.item()
+        # scale up to undo the division above, approximating the true total loss (exact would have been a sum)
+        lossf = loss.item() * gradient_accumulation_steps
         if local_iter_num >= 5: # let the training loop settle a bit
             mfu = raw_model.estimate_mfu(batch_size * gradient_accumulation_steps, dt)
             running_mfu = mfu if running_mfu == -1.0 else 0.9*running_mfu + 0.1*mfu

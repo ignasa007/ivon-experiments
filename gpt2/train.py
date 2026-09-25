@@ -312,6 +312,7 @@ while True:
         X, Y = get_batch('train')
         # backward pass, with gradient scaling if training in fp16
         scaler.scale(loss).backward()
+    # NOTE: this is clipping the norm of the averaged gradient! IVON code clips the norm of each sample gradient.
     # clip the gradient
     if grad_clip != 0.0:
         scaler.unscale_(optimizer)
