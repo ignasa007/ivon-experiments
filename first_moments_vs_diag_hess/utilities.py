@@ -83,7 +83,8 @@ def loss_fn(outputs, one_hot, loss_type):
         return F.cross_entropy(outputs, one_hot, reduction="sum") / outputs.size(0)
     elif loss_type.lower() == "mean squared error":
         return 0.5 * F.mse_loss(outputs, one_hot, reduction="sum") / outputs.size(0)
-    
+    raise ValueError('Only "cross entropy loss" and "mean squared error" supported for argument `loss_type`.')
+
 def train_gd(
     Dataset,
     output_dim: int,
@@ -148,12 +149,11 @@ def train_gd(
             _, predicted = torch.max(outputs.data, 1)
             acc = (predicted == labels).float().mean().item() * 100
             print(f'Epoch [{epoch}/{epochs}], Loss: {loss.item():.2e}, Acc: {acc:.2f}%')
-        if epoch % log_every == 0:
             tracked_vals.append(evaluate_tracker_fns(tracker_fns))
 
     with torch.no_grad():
         losses.append(loss_fn(model(train_inputs), one_hot, loss_type).item())
-    assets = (train_inputs, one_hot, model)
+    assets = (train_inputs, one_hot, model, optimizer)
     out = list(map(np.array, (losses,)))
     out.extend(list(map(np.array, zip(*tracked_vals))))
 
@@ -255,3 +255,4 @@ def plot(xs, ys, ckpts, log_every, xlabel, ylabel, save_fn=None):
     fig.tight_layout()
     if save_fn is not None:
         plt.savefig(save_fn)
+    plt.show()
