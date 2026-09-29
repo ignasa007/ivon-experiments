@@ -218,6 +218,29 @@ if __name__ == "__main__":
     args = get_args()
     print(args, end="\n\n")
 
+    runfolders = list()
+    for seed_dir in sorted(glob(f"{args.traindir}/seed=*")):
+        exp_dirs = sorted(glob(f"{seed_dir}/*"))
+        if len(exp_dirs) == 0:
+            print(f"{seed_dir} is empty; skipping.")
+            continue
+        elif len(exp_dirs) == 1:
+            runfolders.append(exp_dirs[0])
+            continue
+        print(f"Found multiple experiments under {seed_dir}. Choose one:")
+        for i, exp_dir in enumerate(exp_dirs, 1):
+            print(f"\t{i}. {exp_dir}")
+        for attempt in range(1, 4):
+            exp_dir = input(f"Attempt {attempt}: ")
+            if exp_dir not in exp_dirs:
+                print("Please choose from one of the experiments listed above.")
+            else:
+                break
+        else:
+            print("Failed to choose from one of the experiments; skipping.")
+            continue
+        runfolders.append(exp_dir)
+
     # if seed is specified, run deterministically
     if args.seed is not None:
         deteministic_run(seed=args.seed)
@@ -236,7 +259,7 @@ if __name__ == "__main__":
     prefix = "val" if args.valdata else "test"
 
     # iterate over all trained runs (0-4), assume model name best_model.pt
-    for runfolder in sorted(glob(f"{args.traindir}/seed=*/*")):
+    for runfolder in runfolders:
         save_name = runfolder.removeprefix(args.traindir).strip("/").replace("/", "_")
         model_path = pjoin(runfolder, "checkpoint200.pt")
         if not exists(model_path):
