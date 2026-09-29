@@ -17,7 +17,7 @@ from torch.optim import SGD, Adam, Optimizer
 from torch.optim.lr_scheduler import LRScheduler, LinearLR, CosineAnnealingLR
 
 from torch.utils.tensorboard import SummaryWriter
-from optimizers import IVON, IVAdam, PerturbedSGD, PerturbedSGDApprox, SFRMSProp
+from optimizers import IVON, VAdam, PerturbedSGD, PerturbedSGDApprox, SFRMSProp
 from . import models
 from .adahessian import AdaHessian
 from .vogn import VOGN
@@ -810,7 +810,7 @@ def loadcheckpoint(fromfile, device=torch.device("cpu"), epochs=200):
         "VOGN": VOGN,
         "AdaHessian": AdaHessian,
         "IVON": IVON,
-        "IVAdam": IVAdam,
+        "VAdam": VAdam,
         "PerturbedSGD": PerturbedSGD,
         "PerturbedSGDApprox": PerturbedSGDApprox,
         "SFRMSProp": SFRMSProp,

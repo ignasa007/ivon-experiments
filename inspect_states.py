@@ -14,7 +14,7 @@ for fn in sorted(os.listdir(d)):
 
 print("#"*40 + "\n")
 
-d = "results/cifar10/resnet20/ivadam-decoupled/seed=0/2026-08-27-21-41-17"
+d = "results/cifar10/resnet20/vadam-decoupled/seed=0/2026-08-27-21-41-17"
 for fn in sorted(os.listdir(d)):
     if fn.startswith("checkpoint") and fn.endswith(".pt") and fn != "checkpoint.pt":
         _, model, opt, _, _ = loadcheckpoint(f"{d}/{fn}")

@@ -122,10 +122,10 @@ if __name__ == "__main__":
         "results/cifar10/resnet20/adamw/seed=2/2026-09-10-13-12-26",
         "results/cifar10/resnet20/adamw/seed=3/2026-09-10-13-12-27",
         "results/cifar10/resnet20/adamw/seed=4/2026-09-10-13-12-30",
-        "results/cifar10/resnet20/ivadam-coupled-atmean/seed=0/2026-09-08-11-35-14",    # VAdam with AdamW settings in IVON paper
-        "results/cifar10/resnet20/ivadam-coupled-atmean/seed=0/2026-09-15-14-30-30",    # + \eta_{\min} = 0.1 * \eta_{\max}
-        "results/cifar10/resnet20/ivadam-coupled-atmean/seed=0/2026-09-25-14-09-19",    # + corrected \beta_2=0.999
-        "results/cifar10/resnet20/ivadam-decoupled-atmean/seed=0/2026-09-02-16-19-40",  # VAdam with weight decay not included in first-moment -- not truly decoupled
+        "results/cifar10/resnet20/vadam-coupled-atmean/seed=0/2026-09-08-11-35-14",    # VAdam with AdamW settings in IVON paper
+        "results/cifar10/resnet20/vadam-coupled-atmean/seed=0/2026-09-15-14-30-30",    # + \eta_{\min} = 0.1 * \eta_{\max}
+        "results/cifar10/resnet20/vadam-coupled-atmean/seed=0/2026-09-25-14-09-19",    # + corrected \beta_2=0.999
+        "results/cifar10/resnet20/vadam-decoupled-atmean/seed=0/2026-09-02-16-19-40",  # VAdam with weight decay not included in first-moment -- not truly decoupled
         "results/cifar10/resnet20/sfrmsprop/seed=0/2026-09-14-12-56-16",                # Square-root-free RMSProp with lr=0.02
         "results/cifar10/resnet20/sfrmsprop/seed=0/2026-09-15-04-11-16",                # + lr=0.005
         "results/cifar10/resnet20/sfrmsprop/seed=0/2026-09-15-12-02-39",                # + corrected beta_2=0.999

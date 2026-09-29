@@ -5,7 +5,7 @@ import torch.nn.functional as nnf
 import sys
 
 sys.path.append("..")
-from optimizers import IVON, IVAdam, PerturbedSGD, PerturbedSGDApprox, SFRMSProp
+from optimizers import IVON, VAdam, PerturbedSGD, PerturbedSGDApprox, SFRMSProp
 from common.utils import coro_timer, mkdirp
 from common.models import STANDARDMODELS
 from common.dataloaders import (
@@ -190,7 +190,7 @@ def get_args():
         default="ivon",
         choices=[
             "ivon", "sgd", "adam", "adahessian",
-            "ivadam", "perturbedsgd", "perturbedsgd-approx", "sfrmsprop"
+            "vadam", "perturbedsgd", "perturbedsgd-approx", "sfrmsprop"
         ],
         type=str,
         help="optimizer to use",
@@ -222,7 +222,7 @@ def do_trainbatch_ivon(batchinput, model, optimizer):
     return prob, target, loss.item()
 
 
-def do_trainbatch_ivadam(batchinput, model, optimizer):
+def do_trainbatch_vadam(batchinput, model, optimizer):
     
     images, target = batchinput
     loss_samples, prob_samples = list(), list()
@@ -275,8 +275,8 @@ train_functions = {
     "adam": do_trainbatch,
     "adahessian": do_trainbatch_adahessian,
     "ivon": do_trainbatch_ivon,
-    "ivadam": do_trainbatch_ivadam,
-    "perturbedsgd": do_trainbatch_ivadam,
+    "vadam": do_trainbatch_vadam,
+    "perturbedsgd": do_trainbatch_vadam,
     "perturbedsgd-approx": do_trainbatch,
     "sfrmsprop": do_trainbatch,
 }
@@ -323,8 +323,8 @@ def get_optimizer(args, model):
             eps=args.eps,
         )
     
-    elif args.optimizer == "ivadam":
-        return IVAdam(
+    elif args.optimizer == "vadam":
+        return VAdam(
             model.parameters(),
             ess=args.ess,
             lr=args.learning_rate,

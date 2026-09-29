@@ -10,7 +10,7 @@ from torch.optim.optimizer import (
 )
 
 
-class IVAdam(Optimizer):
+class VAdam(Optimizer):
     def __init__(
         self,
         params: ParamsT,

@@ -2,7 +2,7 @@
 
 ts=$(date "+%Y-%m-%d-%H-%M-%S")
 datadir=../datasets
-optimizer=ivadam
+optimizer=vadam
 
 dataset=${1}  # cifar10/cifar100/tinyimagenet
 model=${2}  # resnet20/resnet18wide/preresnet110/densenet121
