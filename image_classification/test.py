@@ -7,7 +7,7 @@ import torch.nn.functional as nnf
 import sys
 
 sys.path.append("..")
-from optimizers import IVON
+from optimizers import IVON, VAdam, PerturbedSGD
 from common import models
 from common.utils import coro_timer, mkdirp
 from common.calibration import bins2diagram
@@ -188,6 +188,25 @@ def do_evalbatch_ivon(batchinput, model, optimizer: IVON, repeat: int = 1):
         cumprob = cumprob + prob / repeat
     return cumprob, gt, cumloss
 
+def do_evalbatch_vadam(batchinput, model, optimizer, repeat: int = 1):
+    inputs, gt = batchinput[:-1], batchinput[-1]
+    cumloss = 0.0
+    cumprob = torch.zeros([])
+    # Store the parameter mean
+    optimizer.store_param_data()
+    for _ in range(repeat):
+        # Sample parameter data using the stored means and noise estimates
+        optimizer.sample_param_data()
+        output = model(*inputs)
+        ll = nnf.log_softmax(output, 1)  # get log-likelihood
+        loss = nnf.nll_loss(ll, gt) / repeat
+        cumloss += loss.item()
+        prob = nnf.softmax(output, 1)  # get likelihood
+        cumprob = cumprob + prob / repeat
+    # Restore parameter data to be the mean stored before sampling
+    optimizer.restore_param_data(clear_data=True)
+    return cumprob, gt, cumloss
+
 
 if __name__ == "__main__":
     torch.set_float32_matmul_precision('high')
@@ -217,9 +236,9 @@ if __name__ == "__main__":
     prefix = "val" if args.valdata else "test"
 
     # iterate over all trained runs (0-4), assume model name best_model.pt
-    for runfolder in glob(f"{args.traindir}/seed=*/*"):
-        save_name = runfolder.rstrip(args.traindir).strip("/").replace("/", "_")
-        model_path = pjoin(runfolder, "checkpoint.pt")
+    for runfolder in sorted(glob(f"{args.traindir}/seed=*/*")):
+        save_name = runfolder.removeprefix(args.traindir).strip("/").replace("/", "_")
+        model_path = pjoin(runfolder, "checkpoint200.pt")
         if not exists(model_path):
             print(f"skipping {runfolder}\n")
             continue
@@ -228,7 +247,6 @@ if __name__ == "__main__":
         # resume model
         # model, dic = loadmodel(model_path, device)
         _, model, optimizer = loadcheckpoint(model_path, device)[:3]
-        print(optimizer.defaults)
         data_loader = get_dataloader(args)
         dataset = args.dataset
         ndata = (
@@ -236,7 +254,7 @@ if __name__ == "__main__":
             if args.valdata
             else NTEST[dataset]
         )
-        if isinstance(optimizer, IVON):
+        if isinstance(optimizer, (IVON, VAdam, PerturbedSGD)):
             if args.testrepeat:
                 prefix = "val_bayes" if args.valdata else "test_bayes"
             else:
@@ -263,6 +281,16 @@ if __name__ == "__main__":
                 do_epoch(
                     data_loader,
                     do_evalbatch_ivon,
+                    log_ece,
+                    device,
+                    model=model,
+                    optimizer=optimizer,
+                    repeat=args.testrepeat,
+                )
+            elif isinstance(optimizer, (VAdam, PerturbedSGD)) and args.testrepeat:
+                do_epoch(
+                    data_loader,
+                    do_evalbatch_vadam,
                     log_ece,
                     device,
                     model=model,
