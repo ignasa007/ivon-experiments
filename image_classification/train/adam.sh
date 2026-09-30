@@ -1,12 +1,12 @@
 #!/bin/bash
 
 ts=$(date "+%Y-%m-%d-%H-%M-%S")
-datadir=../datasets
+datadir="${HOME}/ivon-experiments/datasets"
 optimizer=adam
 
-dataset=$1  # cifar10/cifar100/tinyimagenet
-model=$2  # resnet20/resnet18wide/preresnet110/densenet121
-seed=$3
+dataset=${1}
+model=${2}
+seed=${3}
 
 epochs=${epochs:-200}
 device=${device:-cuda}
@@ -20,7 +20,7 @@ tbatch=${tbatch:-50}
 vbatch=${vbatch:-50}
 split=${split:-1.0}
 
-savedir=../results/${dataset}/${model}/${optimizer}/seed=${seed}/${ts}
+savedir="${HOME}/ivon-experiments/results/${dataset}/${model}/${optimizer}/seed=${seed}/${ts}"
 mkdir -p ${savedir}
 python -u train.py ${model} ${dataset} -opt ${optimizer} -s $seed -dd ${datadir} -sd ${savedir} \
     -lr ${lr} --lr_final ${lr_final} --momentum ${momentum} --momentum_hess ${momentum_hess} \

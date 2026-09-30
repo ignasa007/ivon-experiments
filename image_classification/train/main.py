@@ -1,10 +1,12 @@
 import argparse
+import os
 from os.path import join as pjoin
+import sys
+sys.path.append(f"{os.environ.get("HOME")}/ivon-experiments")
+
 import torch
 import torch.nn.functional as nnf
-import sys
 
-sys.path.append("..")
 from optimizers import IVON, VAdam, PerturbedSGD, PerturbedSGDApprox, SFRMSProp
 from common.utils import coro_timer, mkdirp
 from common.models import STANDARDMODELS
@@ -345,10 +347,10 @@ def get_optimizer(args, model):
     elif args.optimizer == "perturbedsgd-approx":
         return PerturbedSGDApprox(
             model.parameters(),
-            ess=args.ess,
             lr=args.learning_rate,
             betas=(args.momentum, args.momentum_hess),
             weight_decay=args.weight_decay,
+            ess=args.ess,
             hess_init=args.hess_init,
         )
     elif args.optimizer == "sfrmsprop":

@@ -1,12 +1,13 @@
-"""script to run standard/MCDropout cifar10/cifar100 classification test"""
 import argparse
+import os
 from os.path import join as pjoin, exists
 from glob import glob
+import sys
+sys.path.append(f"{os.environ.get("HOME")}/ivon-experiments")
+
 import torch
 import torch.nn.functional as nnf
-import sys
 
-sys.path.append("..")
 from optimizers import IVON, VAdam, PerturbedSGD
 from common import models
 from common.utils import coro_timer, mkdirp
@@ -49,7 +50,6 @@ def get_args():
     parser.add_argument(
         "traindir", type=str, help="path that collects all trained runs."
     )
-
     parser.add_argument(
         "dataset",
         type=str,
@@ -227,6 +227,7 @@ if __name__ == "__main__":
         elif len(exp_dirs) == 1:
             runfolders.append(exp_dirs[0])
             continue
+        exp_dirs = list(map(lambda s: os.path.basename(s), exp_dirs))
         print(f"Found multiple experiments under {seed_dir}. Choose one:")
         for i, exp_dir in enumerate(exp_dirs, 1):
             print(f"\t{i}. {exp_dir}")
@@ -239,7 +240,7 @@ if __name__ == "__main__":
         else:
             print("Failed to choose from one of the experiments; skipping.")
             continue
-        runfolders.append(exp_dir)
+        runfolders.append(f"{seed_dir}/{exp_dir}")
 
     # if seed is specified, run deterministically
     if args.seed is not None:
@@ -255,11 +256,11 @@ if __name__ == "__main__":
     mkdirp(args.save_dir)
 
     log_ece = coro_log_auroc(None, args.printfreq, args.bins, args.save_dir)
-
     prefix = "val" if args.valdata else "test"
 
     # iterate over all trained runs (0-4), assume model name best_model.pt
     for runfolder in runfolders:
+        
         save_name = runfolder.removeprefix(args.traindir).strip("/").replace("/", "_")
         model_path = pjoin(runfolder, "checkpoint200.pt")
         if not exists(model_path):
@@ -267,16 +268,17 @@ if __name__ == "__main__":
             continue
 
         print(f"loading model from {model_path} ...\n")
-        # resume model
-        # model, dic = loadmodel(model_path, device)
         _, model, optimizer = loadcheckpoint(model_path, device)[:3]
         data_loader = get_dataloader(args)
+        
         dataset = args.dataset
         ndata = (
             NTRAIN[dataset] - int(args.tvsplit * NTRAIN[dataset])
             if args.valdata
             else NTEST[dataset]
         )
+        outclass = OUTCLASS[dataset]
+        
         if isinstance(optimizer, (IVON, VAdam, PerturbedSGD)):
             if args.testrepeat:
                 prefix = "val_bayes" if args.valdata else "test_bayes"
@@ -291,13 +293,16 @@ if __name__ == "__main__":
             outputsaver = get_outputsaver(
                 args.save_dir,
                 ndata,
-                OUTCLASS[dataset],
+                outclass,
                 f"predictions_{prefix}_{save_name}.npy",
             )
         else:
             outputsaver = None
 
-        log_ece.send((save_name, prefix, len(data_loader), outputsaver))
+        log_ece.send(
+            (save_name, prefix, len(data_loader), outputsaver)
+        )
+        
         with torch.no_grad():
             model.eval()
             if isinstance(optimizer, IVON) and args.testrepeat:
