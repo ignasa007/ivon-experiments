@@ -6,7 +6,7 @@
 
 **Optimizers.** AdamW and SGD can be tested using the command `bash ${optimizer}.sh ${dataset} ${model}`. PerturbedSGD needs an extra argument &ndash; the number of MC samples used for posterior approximation; launch a run with `bash perturbed_sgd.sh ${dataset} ${model} ${mc_samples}`. IVON needs yet another argument &ndash; the Hessian-approximation strategy; launch a run with `bash ivon.sh ${dataset} ${model} ${hess_approx} ${mc_samples}`.
 
-**Output.** The results are saved in `${traindir}/test/${timestamp}`. The outputs of a run are:
+**Output.** The results are saved in `${train_dir}/test/${timestamp}`. The outputs of a run are:
 
 1. Print statements over training under `stdout.log`.
 2. Predicitions, calibration plots, and evaluation metrics for all experiments.

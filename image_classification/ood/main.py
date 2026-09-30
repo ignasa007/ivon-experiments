@@ -19,6 +19,7 @@ from common.trainutils import (
     loadcheckpoint,
 )
 from common.dataloaders import (
+    TRAINDATALOADERS,
     TESTDATALOADER,
     OUTCLASS,
     NTEST,
@@ -77,13 +78,14 @@ def compute_and_save_metrics(test_folder: str, wamode: str = "", runs=()):
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "traindir",
+        "train_dir",
         type=str,
-        help="path that collects all trained runs."
+        help="path that collects all trained runs.",
     )
     parser.add_argument(
         "dataset",
-        type=str,
+        choices=TRAINDATALOADERS,
+        help="datasets: " + " | ".join(TRAINDATALOADERS),
     )
     parser.add_argument(
         "--ood_dataset",
@@ -229,7 +231,7 @@ if __name__ == "__main__":
     print(args, end="\n\n")
 
     runfolders = list()
-    for seed_dir in sorted(glob(f"{args.traindir}/seed=*")):
+    for seed_dir in sorted(glob(f"{args.train_dir}/seed=*")):
         exp_dirs = sorted(glob(f"{seed_dir}/*"))
         if len(exp_dirs) == 0:
             print(f"{seed_dir} is empty; skipping.")
@@ -277,7 +279,7 @@ if __name__ == "__main__":
 
     for runfolder in runfolders:
         
-        save_name = runfolder.removeprefix(args.traindir).strip("/").replace("/", "_")
+        save_name = runfolder.removeprefix(args.train_dir).strip("/").replace("/", "_")
         model_path = pjoin(runfolder, "checkpoint200.pt")
         if not exists(model_path):
             print(f"skipping {runfolder}\n")

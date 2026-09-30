@@ -6,7 +6,7 @@
 
 **Optimizers.** PerturbedSGD can be tested using the command `bash perturbed_sgd.sh ${dataset} ${model} ${mc_samples} ${ood_dataset}`. IVON needs an extra argument &ndash; the Hessian-approximation strategy; launch a run with `bash ivon.sh ${dataset} ${model} ${hess_approx} ${mc_samples} ${ood_dataset}`.
 
-**Output.** The results are saved in `${traindir}/ood/${timestamp}`. The outputs of a run are:
+**Output.** The results are saved in `${train_dir}/ood/${timestamp}`. The outputs of a run are:
 
 1. Print statements over training under `stdout.log`.
 2. Predicitions on in-domain and OOD datasets for all experiments.

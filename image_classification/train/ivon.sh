@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ts=$(date "+%Y-%m-%d-%H-%M-%S")
-datadir="${HOME}/ivon-experiments/datasets"
+time_stamp=$(date "+%Y-%m-%d-%H-%M-%S")
+data_dir="${HOME}/ivon-experiments/datasets"
 optimizer=ivon
 
 dataset=${1}
@@ -34,10 +34,10 @@ case ${dataset} in
         ;;
 esac
 
-savedir="${HOME}/ivon-experiments/results/${dataset}/${model}/${optimizer}-${hess_approx}/seed=${seed}/${ts}"
-mkdir -p ${savedir}
-python -u main.py ${model} ${dataset} -opt ${optimizer} -s ${seed} -dd ${datadir} -sd ${savedir} \
+save_dir="${HOME}/ivon-experiments/results/${dataset}/${model}/${optimizer}-${hess_approx}/seed=${seed}/${time_stamp}"
+mkdir -p ${save_dir}
+python -u main.py ${model} ${dataset} -opt ${optimizer} -s ${seed} -dd ${data_dir} -sd ${save_dir} \
     -lr ${lr} --lr_final ${lr_final} --momentum ${momentum} --momentum_hess ${momentum_hess} \
     --weight-decay ${wdecay} --hess_approx ${hess_approx} --hess_init ${hess_init} --ess ${ess} \
     --epochs ${epochs} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
-    --tvsplit ${split} |& tee -a ${savedir}/stdout.log
+    --tvsplit ${split} |& tee -a ${save_dir}/stdout.log

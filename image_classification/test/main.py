@@ -48,11 +48,14 @@ def loadmodel(fromfile, device=torch.device("cpu")):
 def get_args():
     parser = argparse.ArgumentParser(description="CIFAR10/100 IVON test")
     parser.add_argument(
-        "traindir", type=str, help="path that collects all trained runs."
+        "train_dir",
+        type=str,
+        help="path that collects all trained runs.",
     )
     parser.add_argument(
         "dataset",
-        type=str,
+        choices=TRAINDATALOADERS,
+        help="datasets: " + " | ".join(TRAINDATALOADERS),
     )
     parser.add_argument(
         "-j",
@@ -219,7 +222,7 @@ if __name__ == "__main__":
     print(args, end="\n\n")
 
     runfolders = list()
-    for seed_dir in sorted(glob(f"{args.traindir}/seed=*")):
+    for seed_dir in sorted(glob(f"{args.train_dir}/seed=*")):
         exp_dirs = sorted(glob(f"{seed_dir}/*"))
         if len(exp_dirs) == 0:
             print(f"{seed_dir} is empty; skipping.")
@@ -261,7 +264,7 @@ if __name__ == "__main__":
     # iterate over all trained runs (0-4), assume model name best_model.pt
     for runfolder in runfolders:
         
-        save_name = runfolder.removeprefix(args.traindir).strip("/").replace("/", "_")
+        save_name = runfolder.removeprefix(args.train_dir).strip("/").replace("/", "_")
         model_path = pjoin(runfolder, "checkpoint200.pt")
         if not exists(model_path):
             print(f"skipping {runfolder}\n")
