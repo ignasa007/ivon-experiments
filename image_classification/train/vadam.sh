@@ -43,7 +43,7 @@ if [ -n "${at_mean+x}" ]; then
 fi
 savedir="${HOME}/ivon-experiments/results/${dataset}/${model}/${opt_name}/seed=${seed}/${ts}"
 mkdir -p ${savedir}
-python -u train.py ${model} ${dataset} -opt ${optimizer} -s ${seed} -dd ${datadir} -sd ${savedir} \
+python -u main.py ${model} ${dataset} -opt ${optimizer} -s ${seed} -dd ${datadir} -sd ${savedir} \
 	-lr ${lr} --lr_final ${lr_final} --momentum ${momentum} --momentum_hess ${momentum_hess} \
 	--weight-decay ${wdecay} ${coupled:+--coupled} --ess ${ess} ${at_mean:+--at_mean} \
 	--epochs ${epochs} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \

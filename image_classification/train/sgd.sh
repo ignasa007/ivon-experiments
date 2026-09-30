@@ -20,7 +20,7 @@ split=${split:-1.0}
 
 savedir="${HOME}/ivon-experiments/trained/${dataset}/${model}/${optimizer}/seed=${seed}/${ts}"
 mkdir -p ${savedir}
-python -u train.py ${model} ${dataset} -opt ${optimizer} -s $seed -dd ${datadir} -sd ${savedir} \
+python -u main.py ${model} ${dataset} -opt ${optimizer} -s $seed -dd ${datadir} -sd ${savedir} \
     -lr ${lr} --lr_final ${lr_final} --momentum ${momentum} --weight-decay ${wdecay} \
     --epochs ${epochs} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
     --tvsplit ${split} |& tee -a ${savedir}/stdout.log
