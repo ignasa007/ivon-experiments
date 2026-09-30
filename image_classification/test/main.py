@@ -255,9 +255,6 @@ if __name__ == "__main__":
     if device != torch.device("cpu"):
         check_cuda()
 
-    # build train_dir for this experiment
-    mkdirp(args.save_dir)
-
     log_ece = coro_log_auroc(None, args.printfreq, args.bins, args.save_dir)
     prefix = "val" if args.valdata else "test"
 

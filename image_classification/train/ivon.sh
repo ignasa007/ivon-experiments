@@ -29,15 +29,25 @@ case ${dataset} in
         ess=200000
         ;;
     *)
-        echo -n "unknown dataset: ${dataset}"
+        echo -n "Error: unknown dataset = ${dataset}"
         exit 1
         ;;
 esac
 
-save_dir="${HOME}/ivon-experiments/results/${dataset}/${model}/${optimizer}-${hess_approx}/seed=${seed}/${time_stamp}"
-mkdir -p ${save_dir}
+if [[ -n "${resume_dir:-}" ]]; then
+    if [[ ! -d "${resume_dir}" ]]; then
+        echo "Error: resume_dir = ${resume_dir} does not exist";
+        exit 1
+    fi
+    save_dir="${resume_dir}"
+else
+    save_dir="${HOME}/ivon-experiments/results/${dataset}/${model}/${optimizer}-${hess_approx}/seed=${seed}/${time_stamp}"
+    mkdir -p ${save_dir}
+fi
+
 python -u main.py ${model} ${dataset} -opt ${optimizer} -s ${seed} -dd ${data_dir} -sd ${save_dir} \
+    ${resume_dir:+--resume} \
     -lr ${lr} --lr_final ${lr_final} --momentum ${momentum} --momentum_hess ${momentum_hess} \
     --weight-decay ${wdecay} --hess_approx ${hess_approx} --hess_init ${hess_init} --ess ${ess} \
-    --epochs ${epochs} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} \
-    --tvsplit ${split} |& tee -a ${save_dir}/stdout.log
+    --epochs ${epochs} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} --tvsplit ${split} \
+    |& tee -a ${save_dir}/stdout.log

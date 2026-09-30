@@ -71,6 +71,8 @@ for ax, split in zip(axs, ("train", "test")):
         for d in dirs:
             fn = f"{d}/{split}.csv"
             df = pd.read_csv(fn, header=0, index_col=False)
+            # In case training is resumed, e.g. stopped at epoch 110, then restarted from epoch 100
+            df = df.drop_duplicates("epoch", keep="last")
             label = name if name is not None else basename(d)
             metrics.append(df.loc[:, col])
         mean, std = np.mean(metrics, axis=0), np.std(metrics, ddof=1, axis=0)

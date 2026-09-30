@@ -15,3 +15,5 @@ IVON needs an extra argument &ndash; the Hessian-approximation strategy, which c
 3. Training and evaluation metrics, along with runtime for each epoch.
 
 **Seed.** We choose `seed` to take five values, from 0 to 4.
+
+**Note.** In case training fails with a checkpoint saved, e.g. failed at epoch 110 with checkpoint saved at epoch 100, then you may resume training by setting the variable `resume_dir` before running the bash scripts.

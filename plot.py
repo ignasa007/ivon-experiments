@@ -35,6 +35,8 @@ for ax, split in zip(axs, ("train", "test")):
     for (d, name), linestyle in zip(dirs, linestyles):
         fn = f"{d}/{split}.csv"
         df = pd.read_csv(fn, header=0, index_col=False)
+        # In case training is resumed, e.g. stopped at epoch 110, then restarted from epoch 100
+        df = df.drop_duplicates("epoch", keep="last")
         label = name if name is not None else basename(d)
         ax.plot(df.loc[:, "epoch"], df.loc[:, col], linestyle=linestyle, linewidth=5, label=label)
     ax.tick_params(axis="both", which="major", labelsize=12)

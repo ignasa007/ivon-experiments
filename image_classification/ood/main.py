@@ -264,9 +264,6 @@ if __name__ == "__main__":
     if device != torch.device("cpu"):
         check_cuda()
 
-    # build train_dir for this experiment
-    mkdirp(args.save_dir)
-
     # prep tensorboard if specified
     log_ece = coro_log(None, args.printfreq, args.save_dir)
 

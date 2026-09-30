@@ -1,6 +1,8 @@
 import argparse
 import os
 from os.path import join as pjoin
+from glob import glob
+import re
 import sys
 sys.path.append(f"{os.environ.get("HOME")}/ivon-experiments")
 
@@ -36,11 +38,13 @@ def get_args():
     parser.add_argument(
         "arch",
         choices=STANDARDMODELS,
+        default=None,
         help="model architecture: " + " | ".join(STANDARDMODELS),
     )
     parser.add_argument(
         "dataset",
         choices=TRAINDATALOADERS,
+        default=None,
         help="datasets: " + " | ".join(TRAINDATALOADERS),
     )
     parser.add_argument(
@@ -121,10 +125,8 @@ def get_args():
     parser.add_argument(
         "-r",
         "--resume",
-        default="",
-        type=str,
-        metavar="PATH",
-        help="resume training from checkpoint",
+        action="store_true",
+        help="resume training from last checkpoint",
     )
     parser.add_argument(
         "-d",
@@ -365,11 +367,16 @@ def get_optimizer(args, model):
 
 
 if __name__ == "__main__":
-    timer = coro_timer()
-    t_init = next(timer)
-    print(f">>> Training initiated at {t_init.isoformat()} <<<\n")
 
     args = get_args()
+    if args.resume:
+        print("\n" + "-"*135 + "\n")
+    
+    timer = coro_timer()
+    t_init = next(timer)
+    
+    print(f">>> Training initiated at {t_init.isoformat()} <<<\n")
+
     print(args, end="\n\n")
 
     # if seed is specified, run deterministically
@@ -382,16 +389,20 @@ if __name__ == "__main__":
     if device != torch.device("cpu"):
         check_cuda()
 
-    # build train_dir for this experiment
-    mkdirp(args.save_dir)
-
     # resume or initialize
     if args.resume:
+        checkpoints = glob(f"{args.save_dir}/checkpoint*.pt")
+        if not checkpoints:
+            raise RuntimeError(f"{args.resume=} but {args.save_dir=} does not have any checkpoints.")
+        latest_checkpoint = sorted(checkpoints).pop(-1)
         startepoch, model, optimizer, scheduler, dic = loadcheckpoint(
-            args.resume, device
+            latest_checkpoint, device
         )
+        # The way they infer startepoch is from the scheduler,
+        #   which can be wrong when the scheduler is changed mid-training
+        startepoch = int(re.search(r"checkpoint(\d{3})\.pt$", latest_checkpoint).group(1))
         modelargs, modelkwargs = dic["modelargs"], dic["modelkwargs"]
-        print(f"resumed from {args.resume}\n")
+        print(f"Resuming training using the latest checkpoint -- {latest_checkpoint}\n")
     else:
         startepoch = 0
         modelargs, modelkwargs = (
@@ -401,9 +412,7 @@ if __name__ == "__main__":
         model = STANDARDMODELS[args.arch](*modelargs, **modelkwargs).to(
             args.device
         )
-
         optimizer = get_optimizer(args, model)
-
         scheduler = (
             torch.optim.lr_scheduler.LinearLR(
                 optimizer,
@@ -416,9 +425,6 @@ if __name__ == "__main__":
         )
 
     data_size = int(NTRAIN[args.dataset] * args.tvsplit)
-
-    # try compile
-    # model = torch.compile(model)
 
     # prep tensorboard if specified
     if args.tensorboard_dir:
@@ -445,7 +451,7 @@ if __name__ == "__main__":
     )
 
     # perform training
-    log_ece = coro_log_timed(sw, args.printfreq, args.bins, args.save_dir)
+    log_ece = coro_log_timed(sw, args.printfreq, args.bins, args.save_dir, append=args.resume)
 
     print(
         f"datasize {int(data_size * args.tvsplit)}, paramsize "

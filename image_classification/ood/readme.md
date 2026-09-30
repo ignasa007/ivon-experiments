@@ -11,4 +11,4 @@
 1. Print statements over training under `stdout.log`.
 2. Predicitions on in-domain and OOD datasets for all experiments.
 
-**Note:** For seeds with multiple experiments, you will be asked to confirm which ones you want to include in the test. Currently, to keep the logic straight-forward, we only allow for one experiment per seed.
+**Note.** For seeds with multiple experiments, you will be asked to confirm which ones you want to include in the test. Currently, to keep the logic straight-forward, we only allow for one experiment per seed.
