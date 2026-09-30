@@ -11,7 +11,7 @@ from utilities import MLP, train_gd, loss_fn, \
     power_law_offset, power_law_offset_format
 
 
-def plot(ax, x, y, xlabel, ylabel, label_data=False):
+def plot(ax, x, y, xlabel=None, ylabel=None, label_data=False):
     x, y = np.asarray(x), np.asarray(y)
     mask = (x > 1e-24) & (y > 1e-24)
     x, y = x[mask], y[mask]
@@ -49,26 +49,38 @@ if __name__ == "__main__":
     )
 
     X, Y, model, optimizer = assets
+    model.train()
+    hess_diag = compute_hess_diag(X, Y, model, LOSS_TYPE, optimizer, DEVICE, HUTCHINSON_SAMPLES).detach().to("cpu")
 
-    fig, axs = plt.subplots(1, 2, figsize=(7.5*2, 4.5*1))
+    fig, axs = plt.subplots(1, 3, figsize=(7.5*3, 4.5*1))
     if not hasattr(axs, "__len__"):
-        axs = np.atleast_2d(np.array((axs,)))
+        axs = np.array((axs,))
+    axs = np.atleast_2d(axs)
     axs_iter = iter(axs.flatten())
     save_fn = "comparing-approximations.png"
 
-    exp_avg_sq = compute_exp_avg_sq(X, Y, model, LOSS_TYPE, optimizer, DEVICE).detach().to("cpu")
-    hess_diag = compute_hess_diag(X, Y, model, LOSS_TYPE, optimizer, DEVICE, HUTCHINSON_SAMPLES).detach().to("cpu")
-    plot(next(axs_iter), exp_avg_sq, hess_diag, xlabel="Exp Avg Sq", ylabel="Hessian Diagonal", label_data=True)
+    first_ax = axs.flatten()[0]
+    extra_kwargs = lambda ax: dict(ylabel="Hessian Diagonal", label_data=True) if ax is first_ax else dict(ylabel=None, label_data=False)
 
     emp_fisher_diag = 0.
     for i in trange(X.size(0)):
         x, y = X[[i], :], Y[[i], :]
-        model.train()
         optimizer.zero_grad()
         loss_fn(model(x), y, LOSS_TYPE).backward()
         emp_fisher_diag += compute_gradient(x, y, model, LOSS_TYPE, optimizer, DEVICE).square()
     emp_fisher_diag = (emp_fisher_diag/X.size(0)).to("cpu")
-    plot(next(axs_iter), emp_fisher_diag, hess_diag, xlabel="Emp Fisher Diagonal", ylabel="Hessian Diagonal", label_data=True)
+    ax = next(axs_iter)
+    plot(ax, emp_fisher_diag, hess_diag, xlabel="EmpFisher Diagonal", **extra_kwargs(ax))
+
+    optimizer.zero_grad()
+    loss_fn(model(X), Y, LOSS_TYPE).backward()
+    inst_sq_grad = compute_gradient(X, Y, model, LOSS_TYPE, optimizer, DEVICE).square().to("cpu")
+    ax = next(axs_iter)
+    plot(ax, inst_sq_grad, hess_diag, xlabel="Inst Sq Grad", **extra_kwargs(ax))
+
+    exp_avg_sq = compute_exp_avg_sq(X, Y, model, LOSS_TYPE, optimizer, DEVICE).detach().to("cpu")
+    ax = next(axs_iter)
+    plot(ax, exp_avg_sq, hess_diag, xlabel="ExpAvg Sq Grad", **extra_kwargs(ax))
 
     fig.tight_layout()
     if save_fn is not None:

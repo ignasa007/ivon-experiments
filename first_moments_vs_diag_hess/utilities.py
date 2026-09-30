@@ -1,16 +1,15 @@
-import warnings; warnings.filterwarnings("ignore")
 from typing import Callable
 
 import numpy as np
 from scipy.optimize import curve_fit
 import torch
 import torch.autograd as autograd
+from torch.utils.data import Subset
 import torch.nn as nn
 from torch.nn.utils import parameters_to_vector
 import torch.nn.functional as F
 import torch.optim as optim
 import torchvision.transforms as transforms
-from torch.utils.data import Subset
 import matplotlib.pyplot as plt
 
 from constants import DATASTORE
@@ -89,13 +88,13 @@ def train_gd(
     Dataset,
     output_dim: int,
     subset_size: int,
-    Model: nn.Module,
+    Model: nn.Module,               # incorrect type-hinting -- Model is not an instance of nn.Module
     widths: list[int],
     model_kwargs: dict,
     act_name: str,
     act_kwargs: dict,
     loss_type: str,
-    Optimizer: optim.Optimizer,
+    Optimizer: optim.Optimizer,     # incorrect type-hinting -- Optimizer is not an instance of optim.Optimizer
     optim_kwargs: dict,
     epochs: int,
     log_every: int,
@@ -104,7 +103,11 @@ def train_gd(
     tracker_fns: list[Callable] = [],
 ):
 
-    full_trainset = Dataset(root=DATASTORE, train=True, download=True, transform=transforms.ToTensor())
+    full_trainset = Dataset(
+        root=f"{DATASTORE}/{Dataset.__name__.lower()}",
+        train=True, download=True, transform=transforms.ToTensor()
+    )
+    torch.manual_seed(seed)
     indices = torch.randperm(len(full_trainset))[:subset_size]
     train_subset = Subset(full_trainset, indices)
 
@@ -220,7 +223,7 @@ def compute_hess_diag(X, Y, model, loss_type, optimizer, device, hutchinson_samp
     hess_diag = sum_samples / hutchinson_samples
     return hess_diag
 
-def power_law_offset(x, a, b, c):
+def power_law_offset(x, a=1., b=1., c=1.):
     return np.log(a + b * (x ** c))
 def power_law_offset_format(a, b, c):
     mantissa, exponent = f"{a:.2e}".split("e")
