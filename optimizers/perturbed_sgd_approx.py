@@ -13,10 +13,10 @@ class PerturbedSGDApprox(Optimizer):
     def __init__(
         self,
         params: ParamsT,
-        ess: float,
         lr: float | Tensor = 1e-3,
         betas: tuple[float | Tensor, float | Tensor] = (0.9, 0.999),
         weight_decay: float = 0,
+        ess: float = None,
         hess_init: float = 0.5,
     ) -> None:
         
