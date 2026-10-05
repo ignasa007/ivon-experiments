@@ -398,7 +398,7 @@ if __name__ == "__main__":
         startepoch, model, optimizer, scheduler, dic = loadcheckpoint(
             latest_checkpoint, device
         )
-        # The way they infer startepoch is from the scheduler,
+        # NOTE: The way they infer startepoch is from the scheduler,
         #   which can be wrong when the scheduler is changed mid-training
         startepoch = int(re.search(r"checkpoint(\d{3})\.pt$", latest_checkpoint).group(1))
         modelargs, modelkwargs = dic["modelargs"], dic["modelkwargs"]
