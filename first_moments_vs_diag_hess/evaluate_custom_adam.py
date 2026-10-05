@@ -4,8 +4,8 @@ import numpy as np
 from scipy.optimize import curve_fit
 from torch.utils.data import Subset
 import torch.nn as nn
-import torch.optim as optim
-import torchvision
+from torch import optim
+from torchvision import datasets
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     OPTIMIZER, OPTIM_KWARGS = CustomAdam, dict(lr=1e-3, betas=(0.9, 0.95))
     assets, out = train_gd(
-        Dataset=torchvision.datasets.MNIST, output_dim=OUTPUT_DIM, subset_size=SUBSET_SIZE,
+        Dataset=datasets.MNIST, output_dim=OUTPUT_DIM, subset_size=SUBSET_SIZE,
         Model=MODEL, widths=WIDTHS, model_kwargs=MODEL_KWARGS,
         act_name=ACTIVATION, act_kwargs=ACT_KWARGS,
         loss_type=LOSS_TYPE, Optimizer=OPTIMIZER, optim_kwargs=OPTIM_KWARGS,
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     ax.plot(losses, linewidth=5, label="Original Adam")
 
     assets, out = train_gd(
-        Dataset=torchvision.datasets.MNIST, output_dim=OUTPUT_DIM, subset_size=SUBSET_SIZE,
+        Dataset=datasets.MNIST, output_dim=OUTPUT_DIM, subset_size=SUBSET_SIZE,
         Model=MODEL, widths=WIDTHS, model_kwargs=MODEL_KWARGS,
         act_name=ACTIVATION, act_kwargs=ACT_KWARGS,
         loss_type=LOSS_TYPE, Optimizer=OPTIMIZER, optim_kwargs=OPTIM_KWARGS,

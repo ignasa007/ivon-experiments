@@ -1,7 +1,7 @@
 from functools import partial
 
-import torchvision
-import torch.optim as optim
+from torchvision import datasets
+from torch import optim
 
 from constants import *
 from utilities import MLP, compute_gradient, compute_hess_diag, train_gd, plot
@@ -15,7 +15,7 @@ OPTIMIZER, OPTIM_KWARGS = optim.SGD, dict(lr=1e-3)
 EPOCHS = 10000; LOG_EVERY = EPOCHS // CKPTS
 
 assets, out = train_gd(
-    Dataset=torchvision.datasets.MNIST, output_dim=OUTPUT_DIM, subset_size=SUBSET_SIZE,
+    Dataset=datasets.MNIST, output_dim=OUTPUT_DIM, subset_size=SUBSET_SIZE,
     Model=MODEL, widths=WIDTHS, model_kwargs=MODEL_KWARGS,
     act_name=ACTIVATION, act_kwargs=ACT_KWARGS,
     loss_type=LOSS_TYPE, Optimizer=OPTIMIZER, optim_kwargs=OPTIM_KWARGS,

@@ -1,4 +1,5 @@
 from typing import Callable
+import os
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -8,7 +9,7 @@ from torch.utils.data import Subset
 import torch.nn as nn
 from torch.nn.utils import parameters_to_vector
 import torch.nn.functional as F
-import torch.optim as optim
+from torch import optim
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 
@@ -257,5 +258,6 @@ def plot(xs, ys, ckpts, log_every, xlabel, ylabel, save_fn=None):
 
     fig.tight_layout()
     if save_fn is not None:
+        os.makedirs(os.path.dirname(save_fn), exist_ok=True)
         plt.savefig(save_fn)
     plt.close()
