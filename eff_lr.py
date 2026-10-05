@@ -43,3 +43,4 @@ plt.legend(fontsize=12, framealpha=1.0)
 
 plt.tight_layout()
 plt.savefig(f"{splitext(basename(inspect.stack()[0][1]))[0]}.png")
+plt.close()

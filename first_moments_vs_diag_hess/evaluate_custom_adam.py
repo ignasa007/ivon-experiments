@@ -150,4 +150,4 @@ if __name__ == "__main__":
     fig.tight_layout()
     if save_fn is not None:
         plt.savefig(save_fn)
-    plt.show()
+    plt.close()

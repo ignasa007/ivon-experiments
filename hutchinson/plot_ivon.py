@@ -68,6 +68,7 @@ def main(exp_dir, approx_func, data_samples, hutchinson_samples, nrows, ncols):
 
     fig.tight_layout()
     plt.savefig(f"{save_dir}/{approx_func.__name__}.png")
+    plt.close()
 
 
 if __name__ == "__main__":

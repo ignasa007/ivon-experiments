@@ -96,6 +96,7 @@ def main(exp_dir, approx_func, data_samples, hutchinson_samples, fit_func, nrows
 
     fig.tight_layout()
     plt.savefig(save_fn)
+    plt.close()
 
 
 if __name__ == "__main__":
