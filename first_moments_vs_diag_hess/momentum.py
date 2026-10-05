@@ -23,9 +23,9 @@ assets, out = train_gd(
     tracker_fns=(compute_momentum, partial(compute_hess_diag, hutchinson_samples=HUTCHINSON_SAMPLES))
 )
 
-losses, grads, hess_diags = out
+losses, momentums, hess_diags = out
 ckpts = [1, 3, 5, 7, 9, 10]
 xlabel = "Momentum"
 ylabel = "Hessian Diagonal"
 
-plot(grads, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{OPTIMIZER.__name__.lower()}/momentum.png")
+plot(momentums, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{OPTIMIZER.__name__.lower()}/momentum.png")

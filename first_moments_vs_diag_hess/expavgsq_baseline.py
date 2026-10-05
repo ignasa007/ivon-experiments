@@ -23,9 +23,9 @@ assets, out = train_gd(
     tracker_fns=(compute_exp_avg_sq, partial(compute_hess_diag, hutchinson_samples=HUTCHINSON_SAMPLES))
 )
 
-losses, grads, hess_diags = out
+losses, exp_avg_sqs, hess_diags = out
 ckpts = [1, 3, 5, 7, 9, 10]
 xlabel = "Exp Avg Sq"
 ylabel = "Hessian Diagonal"
 
-plot(grads, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{OPTIMIZER.__name__.lower()}/expavgsq-baseline.png")
+plot(exp_avg_sqs, hess_diags, ckpts, LOG_EVERY, xlabel, ylabel, save_fn=f"{OPTIMIZER.__name__.lower()}/expavgsq-baseline.png")

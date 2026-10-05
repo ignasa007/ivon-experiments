@@ -57,13 +57,13 @@ class MLP(Model):
 
     def __init__(
         self, widths: list[int], act_name: str, act_kwargs: dict, output_dim: int,
-        normalization: bool = False,
+        bias: bool = True, normalization: bool = False,
     ):
         super().__init__()
-        self.emb_layers = nn.ModuleList([nn.LazyLinear(width, bias=False) for width in widths])
+        self.emb_layers = nn.ModuleList([nn.LazyLinear(width, bias=bias) for width in widths])
         self.activation = get_activation(act_name, **act_kwargs)
-        self.normalization = nn.LayerNorm(widths[-1], eps=1e-12, elementwise_affine=False) if normalization else nn.Identity()
-        self.readout = nn.LazyLinear(output_dim, bias=False)
+        self.normalization = nn.LayerNorm(widths[-1], eps=1e-12) if normalization else nn.Identity()
+        self.readout = nn.LazyLinear(output_dim, bias=bias)
 
     @torch.no_grad()
     def prepare_input(self, x: torch.Tensor) -> torch.Tensor:
@@ -191,7 +191,7 @@ def compute_exp_avg(X, Y, model, loss_type, optimizer, device):
         for param in group["params"]
         if param.requires_grad
     ]
-    return torch.hstack(exp_avg_sq).abs()
+    return torch.hstack(exp_avg_sq)
 
 @torch.no_grad()
 def compute_exp_avg_sq(X, Y, model, loss_type, optimizer, device):
@@ -258,4 +258,4 @@ def plot(xs, ys, ckpts, log_every, xlabel, ylabel, save_fn=None):
     fig.tight_layout()
     if save_fn is not None:
         plt.savefig(save_fn)
-    plt.show()
+    plt.close()
