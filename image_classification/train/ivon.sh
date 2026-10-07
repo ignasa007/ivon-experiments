@@ -13,8 +13,8 @@ epochs=${epochs:-200}
 device=${device:-cuda}
 lr=${lr:-0.2}
 lr_final=${lr_final:-0.0}
-momentum=${momentum:-0.9}
-momentum_hess=${momentum_hess:-0.99999}
+beta1=${beta1:-0.9}
+beta2=${beta2:-0.99999}
 wdecay=${wdecay:-2e-4}
 tbatch=${tbatch:-50}
 vbatch=${vbatch:-50}
@@ -47,7 +47,7 @@ fi
 
 python -u main.py ${model} ${dataset} -opt ${optimizer} -s ${seed} -dd ${data_dir} -sd ${save_dir} \
     ${resume_dir:+--resume} \
-    -lr ${lr} --lr_final ${lr_final} --momentum ${momentum} --momentum_hess ${momentum_hess} \
+    -lr ${lr} --lr_final ${lr_final} --beta1 ${beta1} --beta2 ${beta2} \
     --weight-decay ${wdecay} --hess_approx ${hess_approx} --hess_init ${hess_init} --ess ${ess} \
     --epochs ${epochs} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} --tvsplit ${split} \
     |& tee -a ${save_dir}/stdout.log

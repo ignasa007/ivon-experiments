@@ -112,7 +112,7 @@ def get_args():
         dest="weight_decay",
     )
     parser.add_argument(
-        "--momentum", default=0.9, type=float, metavar="M", help="momentum"
+        "--beta1", default=0.9, type=float, metavar="M", help="beta1"
     )
     parser.add_argument(
         "-pf",
@@ -178,7 +178,7 @@ def get_args():
     )
     parser.add_argument("--hess_approx", default="price", type=str)
     parser.add_argument("--mc_samples", default=1, type=int)
-    parser.add_argument("--momentum_hess", default=0.999, type=float)
+    parser.add_argument("--beta2", default=0.999, type=float)
     parser.add_argument("--hess_init", default=1.0, type=float)
     parser.add_argument("--ess", default=5e4, type=float)
     parser.add_argument("--coupled", action="store_true")
@@ -292,8 +292,8 @@ def get_optimizer(args, model):
             model.parameters(),
             lr=args.learning_rate,
             mc_samples=args.mc_samples,
-            beta1=args.momentum,
-            beta2=args.momentum_hess,
+            beta1=args.beta1,
+            beta2=args.beta2,
             weight_decay=args.weight_decay,
             hess_approx=args.hess_approx,
             hess_init=args.hess_init,
@@ -305,7 +305,7 @@ def get_optimizer(args, model):
         return torch.optim.SGD(
             model.parameters(),
             lr=args.learning_rate,
-            momentum=args.momentum,
+            momentum=args.beta1,
             weight_decay=args.weight_decay,
         )
     
@@ -313,7 +313,7 @@ def get_optimizer(args, model):
         return torch.optim.Adam(
             model.parameters(),
             lr=args.learning_rate,
-            betas=(args.momentum, args.momentum_hess),
+            betas=(args.beta1, args.beta2),
             weight_decay=args.weight_decay,
             decoupled_weight_decay=not args.coupled,
             eps=args.eps,
@@ -332,7 +332,7 @@ def get_optimizer(args, model):
             model.parameters(),
             ess=args.ess,
             lr=args.learning_rate,
-            betas=(args.momentum, args.momentum_hess),
+            betas=(args.beta1, args.beta2),
             weight_decay=args.weight_decay,
             decoupled_weight_decay=not args.coupled,
         )
@@ -340,7 +340,7 @@ def get_optimizer(args, model):
         return PerturbedSGD(
             model.parameters(),
             lr=args.learning_rate,
-            betas=(args.momentum, args.momentum_hess),
+            betas=(args.beta1, args.beta2),
             weight_decay=args.weight_decay,
             ess=args.ess,
             hess_init=args.hess_init,
@@ -350,7 +350,7 @@ def get_optimizer(args, model):
         return PerturbedSGDApprox(
             model.parameters(),
             lr=args.learning_rate,
-            betas=(args.momentum, args.momentum_hess),
+            betas=(args.beta1, args.beta2),
             weight_decay=args.weight_decay,
             ess=args.ess,
             hess_init=args.hess_init,
@@ -359,7 +359,7 @@ def get_optimizer(args, model):
         return SFRMSProp(
             model.parameters(),
             lr=args.learning_rate,
-            betas=(args.momentum, args.momentum_hess),
+            betas=(args.beta1, args.beta2),
             weight_decay=args.weight_decay,
             batch_size=args.tbatch,
             eps=args.eps,
