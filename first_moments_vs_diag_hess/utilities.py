@@ -187,7 +187,7 @@ def compute_momentum(X, Y, model, loss_type, optimizer, device):
 def compute_exp_avg(X, Y, model, loss_type, optimizer, device):
     exp_avg_sq = [
         optimizer.state[param].get("exp_avg", torch.zeros_like(param.data)).flatten() / \
-            (1 - group["betas"][0] / (optimizer.state[param].get("step", 0) + 1e-12))       # Can debias but it barely changes anything
+            (1 - group["betas"][0] ** (optimizer.state[param].get("step", 0) + 1e-12))       # Can debias but it barely changes anything
         for group in optimizer.param_groups
         for param in group["params"]
         if param.requires_grad
@@ -198,7 +198,7 @@ def compute_exp_avg(X, Y, model, loss_type, optimizer, device):
 def compute_exp_avg_sq(X, Y, model, loss_type, optimizer, device):
     exp_avg_sq = [
         optimizer.state[param].get("exp_avg_sq", torch.zeros_like(param.data)).flatten() / \
-            (1 - group["betas"][1] / (optimizer.state[param].get("step", 0) + 1e-12))       # Can debias but it barely changes anything
+            (1 - group["betas"][1] ** (optimizer.state[param].get("step", 0) + 1e-12))       # Can debias but it barely changes anything
         for group in optimizer.param_groups
         for param in group["params"]
         if param.requires_grad
