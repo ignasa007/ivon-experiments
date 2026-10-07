@@ -11,7 +11,7 @@ OUTPUT_DIM = 10
 MODEL, WIDTHS, MODEL_KWARGS = MLP, [64]*3, dict()
 ACTIVATION, ACT_KWARGS = "ReLU", dict()
 LOSS_TYPE = "Mean Squared Error"
-OPTIMIZER = optim.AdamW
+OPTIMIZER = optim.Adam
 EPOCHS = 1000; LOG_EVERY = EPOCHS // CKPTS
 
 train_gd = partial(
