@@ -25,7 +25,7 @@ def compute_hvp(X, Y, model, vector):
     hvp = parameters_to_vector([v.contiguous() for v in hvp])
     return hvp
 
-def compute_hess_diag(train_loader, model, data_samples, hutchinson_samples):
+def estimate_hess_diag(train_loader, model, data_samples, hutchinson_samples):
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     if data_samples > len(train_loader.dataset):
         print(
@@ -76,7 +76,7 @@ def main(exp_dir, data_samples, hutchinson_samples, overwrite=False):
             continue
         _, model, _, _, _ = loadcheckpoint(f"{exp_dir}/{fn}", device="cuda")
         model.eval()
-        hess_diag = compute_hess_diag(train_loader, model, data_samples, hutchinson_samples)
+        hess_diag = estimate_hess_diag(train_loader, model, data_samples, hutchinson_samples)
         torch.save(hess_diag.to("cpu"), f=save_fn)
 
 

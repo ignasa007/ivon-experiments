@@ -4,13 +4,12 @@ import os
 import numpy as np
 from scipy.optimize import curve_fit
 import torch
-import torch.autograd as autograd
+from torch import autograd, optim, nn
+from torch.func import functional_call, jvp, vjp
 from torch.utils.data import Subset
-import torch.nn as nn
 from torch.nn.utils import parameters_to_vector
-import torch.nn.functional as F
-from torch import optim
-import torchvision.transforms as transforms
+from torch.nn import functional as F
+from torchvision import transforms
 import matplotlib.pyplot as plt
 
 from constants import DATASTORE
@@ -205,6 +204,20 @@ def compute_exp_avg_sq(X, Y, model, loss_type, optimizer, device):
     ]
     return torch.hstack(exp_avg_sq)
 
+def exact_hess_diag(X, Y, model, loss_type, optimizer, device):
+    # Follows https://github.com/HeyShinde/torch-secorder/blob/main/torch_secorder/core/hessian_diagonal.py
+    params = [p for p in model.parameters() if p.requires_grad]
+    grads = torch.autograd.grad(loss_fn(model(X), Y, loss_type=loss_type), params, create_graph=True)
+    hess_diag = list()
+    for param, grad in zip(params, grads):
+        grad = grad.flatten()
+        block_diag = torch.zeros_like(grad)
+        for idx in range(grad.numel()):
+            grad2 = torch.autograd.grad(grad[idx], param, retain_graph=True)[0]
+            block_diag[idx] = grad2.flatten()[idx]
+        hess_diag.append(block_diag.detach())
+    return torch.hstack(hess_diag).cpu()
+
 def compute_hvp(X, Y, model, vector, loss_type, device):
     model.zero_grad()
     vector = vector.to(device)
@@ -215,7 +228,7 @@ def compute_hvp(X, Y, model, vector, loss_type, device):
     hvp = parameters_to_vector([v.contiguous() for v in hvp])
     return hvp
 
-def compute_hess_diag(X, Y, model, loss_type, optimizer, device, hutchinson_samples):
+def estimate_hess_diag(X, Y, model, loss_type, optimizer, device, hutchinson_samples):
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     sum_samples = 0.
     for i in range(1, hutchinson_samples+1):
@@ -224,13 +237,28 @@ def compute_hess_diag(X, Y, model, loss_type, optimizer, device, hutchinson_samp
     hess_diag = sum_samples / hutchinson_samples
     return hess_diag
 
+def estimate_ggn_diag(X, Y, model, loss_type, optimizer, device, hutchinson_samples):
+    def f(params):
+        return functional_call(model, dict(params), (X,))
+    names = [name for name, _ in model.named_parameters()]
+    params = dict(model.named_parameters())
+    sum_samples = 0.
+    for i in range(1, hutchinson_samples+1):
+        random_vectors = {name: torch.randint_like(params[name], 2).mul(2).sub(1) for name in names}
+        _, Jv = jvp(f, (params,), (random_vectors,))
+        _, vjp_fn = vjp(f, params)
+        JtJv = vjp_fn(Jv)[0]
+        sum_samples += 1/X.size(0) * torch.cat([(random_vectors[name]*JtJv[name]).reshape(-1) for name in names])
+    ggn_diag = sum_samples / hutchinson_samples
+    return ggn_diag
+
 def power_law_offset(x, a=1., b=1., c=1.):
     return np.log(a + b * (x ** c))
 def power_law_offset_format(a, b, c):
     mantissa, exponent = f"{a:.2e}".split("e")
     return f"$y = {mantissa} \\cdot 10^{{{exponent}}} + {b:.2f} \\cdot x^{{{c:.2f}}}$"
 
-def plot(xs, ys, ckpts, log_every, xlabel, ylabel, save_fn=None):
+def plot(xs, ys, ckpts, xlabel, ylabel, log_every, save_fn=None):
 
     fig, axs = plt.subplots(2, 3, figsize=(7.5*3, 4.5*2))
     for i, (ckpt, ax) in enumerate(zip(ckpts, axs.flatten())):
