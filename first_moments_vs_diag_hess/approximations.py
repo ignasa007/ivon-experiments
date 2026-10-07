@@ -1,8 +1,8 @@
 from tqdm import trange
 import numpy as np
 from scipy.optimize import curve_fit
-import torchvision
-import torch.optim as optim
+from torchvision import datasets
+from torch import optim
 import matplotlib.pyplot as plt
 
 from constants import *
@@ -34,14 +34,14 @@ def plot(ax, x, y, xlabel=None, ylabel=None, label_data=False):
 if __name__ == "__main__":
 
     OUTPUT_DIM = 10
-    MODEL, WIDTHS, MODEL_KWARGS = MLP, [64]*3, dict()
-    ACTIVATION, ACT_KWARGS = "ReLU", dict()
+    MODEL, WIDTHS, MODEL_KWARGS = MLP, [64]*1, dict()
+    ACTIVATION, ACT_KWARGS = "Linear", dict()
     LOSS_TYPE = "Mean Squared Error"
     OPTIMIZER, OPTIM_KWARGS = optim.Adam, dict(lr=1e-3, betas=(0.9, 0.95))
     EPOCHS = 1000; LOG_EVERY = EPOCHS // 10
 
     assets, out = train_gd(
-        Dataset=torchvision.datasets.MNIST, output_dim=OUTPUT_DIM, subset_size=SUBSET_SIZE,
+        Dataset=datasets.MNIST, output_dim=OUTPUT_DIM, subset_size=SUBSET_SIZE,
         Model=MODEL, widths=WIDTHS, model_kwargs=MODEL_KWARGS,
         act_name=ACTIVATION, act_kwargs=ACT_KWARGS,
         loss_type=LOSS_TYPE, Optimizer=OPTIMIZER, optim_kwargs=OPTIM_KWARGS,
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     model.train()
     hess_diag = compute_hess_diag(X, Y, model, LOSS_TYPE, optimizer, DEVICE, HUTCHINSON_SAMPLES).detach().to("cpu")
 
-    fig, axs = plt.subplots(1, 3, figsize=(7.5*3, 4.5*1))
+    fig, axs = plt.subplots(1, 4, figsize=(7.5*4, 4.5*1))
     if not hasattr(axs, "__len__"):
         axs = np.array((axs,))
     axs = np.atleast_2d(axs)
@@ -62,15 +62,9 @@ if __name__ == "__main__":
     first_ax = axs.flatten()[0]
     extra_kwargs = lambda ax: dict(ylabel="Hessian Diagonal", label_data=True) if ax is first_ax else dict(ylabel=None, label_data=False)
 
-    emp_fisher_diag = 0.
-    for i in trange(X.size(0)):
-        x, y = X[[i], :], Y[[i], :]
-        optimizer.zero_grad()
-        loss_fn(model(x), y, LOSS_TYPE).backward()
-        emp_fisher_diag += compute_gradient(x, y, model, LOSS_TYPE, optimizer, DEVICE).square()
-    emp_fisher_diag = (emp_fisher_diag/X.size(0)).to("cpu")
+    exp_avg_sq = compute_exp_avg_sq(X, Y, model, LOSS_TYPE, optimizer, DEVICE).detach().to("cpu")
     ax = next(axs_iter)
-    plot(ax, emp_fisher_diag, hess_diag, xlabel="EmpFisher Diagonal", **extra_kwargs(ax))
+    plot(ax, exp_avg_sq, hess_diag, xlabel="ExpAvg Sq Grad", **extra_kwargs(ax))
 
     optimizer.zero_grad()
     loss_fn(model(X), Y, LOSS_TYPE).backward()
@@ -78,11 +72,20 @@ if __name__ == "__main__":
     ax = next(axs_iter)
     plot(ax, inst_sq_grad, hess_diag, xlabel="Inst Sq Grad", **extra_kwargs(ax))
 
-    exp_avg_sq = compute_exp_avg_sq(X, Y, model, LOSS_TYPE, optimizer, DEVICE).detach().to("cpu")
+    emp_fisher_diag = 0.
+    for i in trange(X.size(0)):
+        x, y = X[[i], :], Y[[i], :]
+        optimizer.zero_grad()
+        loss_fn(model(x), y, LOSS_TYPE).backward()
+        emp_fisher_diag += compute_gradient(x, y, model, LOSS_TYPE, optimizer, DEVICE).square()
+    emp_fisher_diag = emp_fisher_diag.to("cpu") / X.size(0)
     ax = next(axs_iter)
-    plot(ax, exp_avg_sq, hess_diag, xlabel="ExpAvg Sq Grad", **extra_kwargs(ax))
+    plot(ax, emp_fisher_diag, hess_diag, xlabel="EmpFisher Diagonal", **extra_kwargs(ax))
+
+    ax = next(axs_iter)
+    plot(ax, inst_sq_grad, emp_fisher_diag, xlabel="Inst Sq Grad", ylabel="EmpFisher Diag", label_data=False)
 
     fig.tight_layout()
     if save_fn is not None:
         plt.savefig(save_fn)
-    plt.show()
+    plt.close()

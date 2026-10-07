@@ -4,7 +4,7 @@ import torch
 
 
 DATASTORE = f"{os.environ.get("HOME")}/ivon-experiments/datasets"
-ASSETS = "./assets-prec"
+ASSETS = f"{os.environ.get("HOME")}/ivon-experiments/assets"
 SUBSET_SIZE = 5000
 CKPTS = 10
 HUTCHINSON_SAMPLES = 1000
