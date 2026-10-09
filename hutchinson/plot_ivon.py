@@ -60,6 +60,7 @@ def main(exp_dir, approx_func, data_samples, hutchinson_samples, nrows, ncols):
             ax, x=approx.numpy(), y=hess_diag.numpy(),
             checkpoint=ckpt, label_data=(i==0)
         )
+        ax.set_xlim(0.05, 0.5)
 
     for ax in axs[:,0]:
         ax.set_ylabel("Hessian Diagonal", fontsize=20)
