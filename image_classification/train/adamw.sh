@@ -15,7 +15,7 @@ lr_final=${lr_final:-0.0}
 beta1=${beta1:-0.9}
 beta2=${beta2:-0.999}
 wdecay=${wdecay:-2e-4}
-eps=${wdecay:-1e-8}
+eps=${eps:-1e-8}
 tbatch=${tbatch:-50}
 vbatch=${vbatch:-50}
 split=${split:-1.0}
@@ -34,6 +34,6 @@ fi
 python -u main.py ${model} ${dataset} -opt ${optimizer} -s ${seed} -dd ${data_dir} -sd ${save_dir} \
     ${resume_dir:+--resume} \
     -lr ${lr} --lr_final ${lr_final} --beta1 ${beta1} --beta2 ${beta2} \
-    --weight-decay ${wdecay} --coupled --eps ${eps} \
+    --weight-decay ${wdecay} --eps ${eps} \
     --epochs ${epochs} --device ${device} -pd --tbatch ${tbatch} --vbatch ${vbatch} --tvsplit ${split} \
     |& tee -a ${save_dir}/stdout.log
