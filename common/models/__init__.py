@@ -30,7 +30,7 @@ def savemodel(
 
 # standard load model function
 def loadmodel(fromfile, device=torch.device("cpu")):
-    dic = torch.load(fromfile, map_location=device)
+    dic = torch.load(fromfile, map_location=device, weights_only=False)
     model = globals()[dic["modelname"]](
         *dic["modelargs"], **dic.get("modelkwargs", {})
     ).to(device)

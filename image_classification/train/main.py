@@ -29,6 +29,7 @@ from common.trainutils import (
     deteministic_run,
     savecheckpoint,
     loadcheckpoint,
+    set_rng_state,
 )
 from common.adahessian import AdaHessian
 
@@ -396,15 +397,16 @@ if __name__ == "__main__":
             raise RuntimeError(f"{args.resume=} but {args.save_dir=} does not have any checkpoints.")
         latest_checkpoint = sorted(checkpoints).pop(-1)
         startepoch, model, optimizer, scheduler, dic = loadcheckpoint(
-            latest_checkpoint, device
+            latest_checkpoint, device, args.epochs
         )
         # NOTE: The way they infer startepoch is from the scheduler,
         #   which can be wrong when the scheduler is changed mid-training
-        startepoch = int(re.search(r"checkpoint(\d{3})\.pt$", latest_checkpoint).group(1))
+        startepoch = 1 + int(re.search(r"checkpoint(\d{3})\.pt$", latest_checkpoint).group(1))
         modelargs, modelkwargs = dic["modelargs"], dic["modelkwargs"]
+        set_rng_state(dic["randomstates"])
         print(f"Resuming training using the latest checkpoint -- {latest_checkpoint}\n")
     else:
-        startepoch = 0
+        startepoch = 1
         modelargs, modelkwargs = (
             OUTCLASS[args.dataset],
             INSIZE[args.dataset],
@@ -460,10 +462,10 @@ if __name__ == "__main__":
 
     print(f">>> Training starts at {next(timer)[0].isoformat()} <<<\n")
 
-    for e in range(startepoch, args.epochs):
+    for e in range(startepoch, args.epochs+1):
         # run training part
         log_ece.send((e, "train", len(train_loader), None))
-        if e == args.warmup:
+        if e > args.warmup:
             # Creating a new scheduler will already change the learning rate
             print(f"End of warmup epochs, starting cosine annealing")
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
@@ -483,17 +485,6 @@ if __name__ == "__main__":
         log_ece.throw(StopIteration)
         # update lr scheduler and decay
 
-        checkpoint_epochs = [40, 50, 75, 100, 150, 200]
-        if e+1 in checkpoint_epochs:
-            savecheckpoint(
-                pjoin(args.save_dir, "checkpoint%03d.pt" % (e+1)),
-                args.arch,
-                modelargs,
-                modelkwargs,
-                model,
-                optimizer,
-                scheduler,
-            )
         print(f'Max memory usage {torch.cuda.max_memory_allocated()}')
         time_per_epoch = next(timer)[1]
         print(f">>> Time elapsed: {time_per_epoch} <<<\n")
@@ -509,15 +500,26 @@ if __name__ == "__main__":
             do_epoch(test_loader, do_evalbatch, log_ece, device, model=model)
         log_ece.throw(StopIteration)
 
-        if len(val_loader) == 0:
-            continue
+        if len(val_loader) > 0:
+            # run evaluation part
+            log_ece.send((e, "val", len(val_loader), None))
+            with torch.no_grad():
+                model.eval()
+                do_epoch(val_loader, do_evalbatch, log_ece, device, model=model)
+            log_ece.throw(StopIteration)
 
-        # run evaluation part
-        log_ece.send((e, "val", len(val_loader), None))
-        with torch.no_grad():
-            model.eval()
-            do_epoch(val_loader, do_evalbatch, log_ece, device, model=model)
-        log_ece.throw(StopIteration)
+        checkpoint_epochs = [1, 2, 3, 5, 10, 40, 50, 75, 100, 150, 200]
+        if e in checkpoint_epochs:
+            model.train()
+            savecheckpoint(
+                pjoin(args.save_dir, "checkpoint%03d.pt" % e),
+                args.arch,
+                modelargs,
+                modelkwargs,
+                model,
+                optimizer,
+                scheduler,
+            )
 
         print(f">>> Time elapsed: {next(timer)[1]} <<<\n")
 

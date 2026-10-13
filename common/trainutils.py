@@ -769,6 +769,20 @@ class AUROC:
             auroc = float('nan')
         return auroc
 
+def get_rng_state():
+    state = {
+        "python": random.getstate(),
+        "numpy": np.random.get_state(),
+        "torch": torch.get_rng_state(),
+        "cuda": torch.cuda.get_rng_state_all(),
+    }
+    return state
+
+def set_rng_state(state):
+    random.setstate(state["python"])
+    np.random.set_state(state["numpy"])
+    torch.set_rng_state(state["torch"].cpu())
+    torch.cuda.set_rng_state_all(list(map(lambda t: t.cpu(), state["cuda"])))
 
 def savecheckpoint(
     to,
@@ -794,6 +808,7 @@ def savecheckpoint(
                 "optimstates": optimizer.state_dict(),
                 "schedulername": type(scheduler).__name__,
                 "schedulerstates": scheduler.state_dict(),
+                "randomstates": get_rng_state(),
             },
             **kwargs,
         )
@@ -815,7 +830,6 @@ def loadcheckpoint(fromfile, device=torch.device("cpu"), epochs=200):
         "PerturbedSGDApprox": PerturbedSGDApprox,
         "SFRMSProp": SFRMSProp,
     }[dic["optimname"]](model.parameters(), **dic.pop("optimargs"))
-    optimizer.load_state_dict(dic.pop("optimstates"))
     schedulername = dic["schedulername"]
     if schedulername == "LinearLR":
         scheduler = LinearLR(optimizer)
@@ -825,6 +839,8 @@ def loadcheckpoint(fromfile, device=torch.device("cpu"), epochs=200):
         )
     else:
         raise NotImplementedError
+    # NOTE: Important to load after initializing the scheduler so as to undo scheduler._initial_step()
+    optimizer.load_state_dict(dic.pop("optimstates"))
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=UserWarning)
         scheduler.load_state_dict(dic.pop("schedulerstates"))
