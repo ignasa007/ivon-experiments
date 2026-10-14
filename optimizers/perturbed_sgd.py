@@ -11,7 +11,15 @@ from torch.optim.optimizer import (
 )
 
 
-class PerturbedSGD(Optimizer):
+def vector_to_parameters(vec, parameters) -> None:
+    pointer = 0
+    for param in parameters:
+        num_param = param.numel()
+        param.data = vec[pointer:pointer+num_param].view_as(param).data
+        pointer += num_param
+
+
+class PerturbedSGDOld(Optimizer):
     def __init__(
         self,
         params: ParamsT,
@@ -145,7 +153,7 @@ class PerturbedSGD(Optimizer):
                     torch._foreach_clamp_min_(updates, [-1.*clip_radius for clip_radius in clip_radii])
                 # Update
                 torch._foreach_addcdiv_(params, updates, scalings, value=-lr)
-
+        
         return loss
 
     @torch.no_grad()
@@ -153,10 +161,9 @@ class PerturbedSGD(Optimizer):
         for group in self.param_groups:
             for p in group["params"]:
                 if p.requires_grad:
-                    state = self.state[p]
-                    state["data"] = p.data.clone()
+                    self.state[p]["data"] = p.data.clone()
 
-    # NOTE: slightly different numbers, but because of GPU
+    # NOTE: slightly different numbers, maybe because of GPU
     @torch.no_grad()
     def sample_param_data(self):
         for group in self.param_groups:
@@ -165,6 +172,7 @@ class PerturbedSGD(Optimizer):
                 continue
             params_data = [self.state[p]["data"] for p in params]
             # We can do-away with this if we're using only one MC sample
+            # TODO: This works only when we use one sample since it links params and params_data -- MAYBE, IDK
             torch._foreach_copy_(params, params_data)
             noises = [torch.randn_like(p) for p in params]
             init_scale, beta2 = group["ess"]*group["hess_init"], group["betas"][1]
@@ -182,3 +190,93 @@ class PerturbedSGD(Optimizer):
             if clear_data:
                 for p in params:
                     del self.state[p]["data"]
+
+
+class PerturbedSGDNew(PerturbedSGDOld):
+    def __init__(
+        self,
+        params: ParamsT,
+        lr: float | Tensor = 1e-3,
+        betas: tuple[float | Tensor, float | Tensor] = (0.9, 0.999),
+        weight_decay: float = 0,
+        ess: float = None,
+        hess_init: float = 0.5,
+        clip_radius: float = torch.inf,
+    ) -> None:
+        
+        super().__init__(params, lr, betas, weight_decay, ess, hess_init, clip_radius)
+
+    def _eager_state_init(self):
+        for group in self.param_groups:
+            group["step"] = torch.tensor(0.0, dtype=_get_scalar_dtype(), device="cpu")
+            numel = sum((p.numel() for p in group["params"] if p.requires_grad))
+            devices = set((p.device for p in group["params"]))
+            assert len(devices) == 1
+            group["exp_avg"] = torch.zeros(numel, device=devices.pop())
+
+    @torch.no_grad()
+    def step(self, closure=None):
+
+        loss = None
+        if closure is not None:
+            with torch.enable_grad():
+                loss = closure()
+
+        for group in self.param_groups:
+            
+            state_step = group["step"]
+            exp_avg = group["exp_avg"]
+            lr = group["lr"]
+            beta1, beta2 = group["betas"]
+            weight_decay = group["weight_decay"]
+            hess_init = group["hess_init"]
+            clip_radius = group["clip_radius"]
+
+            # State management
+            state_step += 1
+            state_step = _get_value(state_step)
+            # Computation
+            flattened_grads = torch.cat([p.grad.view(-1) for p in group["params"] if p.requires_grad])
+            exp_avg.lerp_(flattened_grads, weight=1-beta1)
+            del flattened_grads
+            # Assuming all tensors in the group have been updated for the same number of steps
+            bias_correction1 = 1 - beta1 ** state_step
+            flattened_params = torch.cat([p.data.view(-1) for p in group["params"] if p.requires_grad])
+            updates = torch.add(exp_avg, flattened_params, alpha=bias_correction1*weight_decay)
+            # Clamp
+            scaling = bias_correction1 * beta2 ** state_step
+            if math.isfinite(clip_radius):
+                clip_radii = clip_radius * hess_init * scaling
+                updates.clamp_(-clip_radii, clip_radii)
+            flattened_params.sub_(updates, alpha=lr/scaling)
+            del updates
+            # Update
+            vector_to_parameters(flattened_params, group["params"])
+            del flattened_params
+
+        return loss
+
+    @torch.no_grad()
+    def store_param_data(self):
+        for group in self.param_groups:
+            group["data"] = torch.cat([p.data.view(-1) for p in group["params"]])
+
+    # NOTE: slightly different numbers, but because we sample at once instead of separately for each parameter
+    @torch.no_grad()
+    def sample_param_data(self):
+        for group in self.param_groups:
+            flattened_params = group["data"]
+            noise = torch.randn_like(flattened_params)
+            precision = group["ess"] * group["hess_init"] * group["betas"][1]**group["step"]
+            flattened_params = flattened_params.add(noise, alpha=precision**(-0.5))
+            vector_to_parameters(flattened_params, group["params"])
+
+    @torch.no_grad()
+    def restore_param_data(self, clear_data: bool = False):
+        for group in self.param_groups:
+            vector_to_parameters(group["data"], group["params"])
+            if clear_data:
+                del group["data"]
+
+
+PerturbedSGD = PerturbedSGDNew
