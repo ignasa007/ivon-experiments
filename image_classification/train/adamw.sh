@@ -9,7 +9,7 @@ model=${2}
 seed=${3}
 
 epochs=${epochs:-200}
-device=${device:-cuda}  # cpu/cuda/cuda:X
+device=${device:-cuda}
 lr=${lr:-0.002}
 lr_final=${lr_final:-0.0}
 beta1=${beta1:-0.9}
@@ -27,7 +27,7 @@ if [[ -n "${resume_dir:-}" ]]; then
     fi
     save_dir="${resume_dir}"
 else
-    save_dir="${HOME}/ivon-experiments/results/${dataset}/${model}/${optimizer}/seed=${seed}/${time_stamp}"
+    save_dir="${HOME}/ivon-experiments/results/${dataset}/${model}/${optimizer}w/seed=${seed}/${time_stamp}"
     mkdir -p ${save_dir}
 fi
 
