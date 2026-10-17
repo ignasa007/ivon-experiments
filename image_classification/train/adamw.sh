@@ -27,7 +27,7 @@ if [[ -n "${resume_dir:-}" ]]; then
     fi
     save_dir="${resume_dir}"
 else
-    save_dir="${HOME}/ivon-experiments/results/${dataset}/${model}/${optimizer}/seed=${seed}/${time_stamp}"
+    save_dir="${HOME}/ivon-experiments/results/${dataset}/${model}/${optimizer}w/seed=${seed}/${time_stamp}"
     mkdir -p ${save_dir}
 fi
 
