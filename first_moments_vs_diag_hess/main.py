@@ -51,13 +51,13 @@ def make_optim_kwargs(args):
     if args.optimizer == "sgd":
         return dict(lr=args.lr, momentum=args.beta1)
     elif args.optimizer in ("adam", "adamw"):
-        return dict(lr=args.lr, betas=(args.beta1, args.beta2))
+        return dict(lr=args.lr, betas=(args.beta1, args.beta2), eps=args.eps)
     
 def make_tracker_fns(args):
     tracker_fns = list()
     for tracker in args.trackers:
         tracker_fn, _ = tracker_fns_map[tracker]
-        if tracker in ("gnn_diag", "hess_diag"):
+        if tracker in ("ggn_diag", "hess_diag"):
             tracker_fn = partial(tracker_fn, hutchinson_samples=args.hutchinson_samples)
         tracker_fns.append(tracker_fn)
     return tracker_fns
