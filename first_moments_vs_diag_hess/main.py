@@ -48,10 +48,14 @@ tracker_fns_map = {
 }
 
 def make_optim_kwargs(args):
+    optim_kwargs = dict(lr=args.lr)
+    if args.weight_decay is not None:
+        optim_kwargs.update(weight_decay=args.weight_decay)
     if args.optimizer == "sgd":
-        return dict(lr=args.lr, momentum=args.beta1)
+        optim_kwargs.update(momentum=args.beta1)
     elif args.optimizer in ("adam", "adamw"):
-        return dict(lr=args.lr, betas=(args.beta1, args.beta2), eps=args.eps)
+        optim_kwargs.update(betas=(args.beta1, args.beta2), eps=args.eps)
+    return optim_kwargs
     
 def make_tracker_fns(args):
     tracker_fns = list()
@@ -100,7 +104,7 @@ parser.add_argument(
     "--activation",
     type=str.lower,
     default="relu",
-    choices=["identity", "linear", "relu", "tanh", "sigmoid"]
+    choices=["identity", "linear", "relu", "leakyrelu", "tanh", "sigmoid"]
 )
 parser.add_argument(
     "--loss_type",
@@ -133,6 +137,11 @@ parser.add_argument(
     "--eps",
     type=float,
     default=1e-8
+)
+parser.add_argument(
+    "--weight_decay",
+    type=float,
+    default=None
 )
 parser.add_argument(
     "--epochs",
