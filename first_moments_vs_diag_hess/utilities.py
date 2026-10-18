@@ -6,7 +6,7 @@ from scipy.optimize import curve_fit
 import torch
 from torch import autograd, optim, nn
 from torch.func import functional_call, jvp, vjp
-from torch.utils.data import Subset
+from torch.utils.data import Subset, TensorDataset, DataLoader
 from torch.nn.utils import parameters_to_vector
 from torch.nn import functional as F
 from torchvision import transforms
@@ -88,6 +88,7 @@ def train_gd(
     Dataset,
     output_dim: int,
     subset_size: int,
+    batch_size: int,
     Model: nn.Module,               # incorrect type-hinting -- Model is not an instance of nn.Module
     widths: list[int],
     model_kwargs: dict,
@@ -96,7 +97,7 @@ def train_gd(
     loss_type: str,
     Optimizer: optim.Optimizer,     # incorrect type-hinting -- Optimizer is not an instance of optim.Optimizer
     optim_kwargs: dict,
-    epochs: int,
+    steps: int,
     log_every: int,
     device: torch.device,
     seed: int,
@@ -111,7 +112,7 @@ def train_gd(
     indices = torch.randperm(len(full_trainset))[:subset_size]
     train_subset = Subset(full_trainset, indices)
 
-    data_loader = torch.utils.data.DataLoader(train_subset, batch_size=subset_size)
+    data_loader = DataLoader(train_subset, batch_size=subset_size)
     images, labels = next(iter(data_loader))
     images, labels = images.to(device), labels.to(device)
     one_hot = torch.nn.functional.one_hot(labels, num_classes=output_dim).float()
@@ -123,10 +124,15 @@ def train_gd(
     ).to(device)
 
     train_inputs = model.prepare_input(images)      # Also initializes lazy layers
+    data_loader = DataLoader(TensorDataset(train_inputs, one_hot, labels), batch_size, shuffle=True)
+    
     model.reset_parameters(seed=seed)
+    model.train()
 
     optimizer = Optimizer(model.parameters(), **optim_kwargs)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=100, threshold=1e-3, threshold_mode="rel")
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, factor=0.5, patience=100, threshold=1e-3, threshold_mode="rel"
+    )
 
     def evaluate_tracker_fns(tracker_fns):
         out = []
@@ -136,23 +142,29 @@ def train_gd(
 
     losses, tracked_vals = [], []
     tracked_vals.append(evaluate_tracker_fns(tracker_fns))
+    step = 1
 
-    for epoch in range(1, epochs+1):
+    while step <= steps:
 
-        model.train()
-        optimizer.zero_grad()
-        outputs = model(train_inputs)
-        loss = loss_fn(outputs, one_hot, loss_type)
-        loss.backward()
-        optimizer.step()
-        scheduler.step(loss.detach().item())
+        for x, y_, y in data_loader:
 
-        losses.append(loss.detach().item())
-        if epoch % log_every == 0:
-            _, predicted = torch.max(outputs.data, 1)
-            acc = (predicted == labels).float().mean().item() * 100
-            print(f'Epoch [{epoch}/{epochs}], Loss: {loss.item():.2e}, Acc: {acc:.2f}%')
-            tracked_vals.append(evaluate_tracker_fns(tracker_fns))
+            optimizer.zero_grad()
+            outputs = model(x)
+            loss = loss_fn(outputs, y_, loss_type)
+            loss.backward()
+            optimizer.step()
+            scheduler.step(loss.detach().item())
+            losses.append(loss.detach().item())
+        
+            if step % log_every == 0:
+                _, predicted = torch.max(outputs.data, 1)
+                acc = (predicted == y).float().mean().item() * 100
+                print(f"Step [{step}/{steps}], Loss: {loss.item():.2e}, Acc: {acc:.2f}%")
+                tracked_vals.append(evaluate_tracker_fns(tracker_fns))
+
+            step += 1
+            if step > steps:
+                break
 
     with torch.no_grad():
         losses.append(loss_fn(model(train_inputs), one_hot, loss_type).item())

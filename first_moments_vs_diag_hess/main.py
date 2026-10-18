@@ -80,6 +80,11 @@ parser.add_argument(
     default=SUBSET_SIZE
 )
 parser.add_argument(
+    "--batch_size",
+    type=int,
+    default=None
+)
+parser.add_argument(
     "--model",
     type=str.lower,
     default="mlp",
@@ -144,7 +149,7 @@ parser.add_argument(
     default=None
 )
 parser.add_argument(
-    "--epochs",
+    "--steps",
     type=int,
     default=1000
 )
@@ -181,6 +186,7 @@ parser.add_argument(
 def run(args):
 
     Dataset, output_dim = dataset_map[args.dataset]
+    args.batch_size = args.batch_size if args.batch_size is not None else args.subset_size
     Model = model_map[args.model]
     widths = as_list(args.widths)
     model_kwargs = dict(bias=args.bias, normalization=args.normalization)
@@ -188,15 +194,16 @@ def run(args):
     Optimizer = optimizer_map[args.optimizer]
     optim_kwargs = make_optim_kwargs(args)
     tracker_fns = make_tracker_fns(args)
-    log_every = args.epochs // args.ckpts
+    log_every = args.steps // args.ckpts
     device = torch.device(args.device)
 
     assets, out = train_gd(
-        Dataset=Dataset, subset_size=args.subset_size, output_dim=output_dim,
+        Dataset=Dataset, output_dim=output_dim,
+        subset_size=args.subset_size, batch_size=args.batch_size,
         Model=Model, widths=widths, model_kwargs=model_kwargs,
         act_name=args.activation, act_kwargs=dict(),    # don't currently support `act_kwargs`
         loss_type=loss_type, Optimizer=Optimizer, optim_kwargs=optim_kwargs,
-        epochs=args.epochs, log_every=log_every,
+        steps=args.steps, log_every=log_every,
         device=device, seed=args.seed, tracker_fns=tracker_fns,
     )
 
@@ -211,6 +218,6 @@ if __name__ == "__main__":
     optimizer, tracked_vals = assets[-1], out[1:]
     ckpts = [1, 3, 5, 7, 9, 10]
     labels = [tracker_fns_map[tracker][1] for tracker in args.trackers]
-    log_every = args.epochs // args.ckpts
+    log_every = args.steps // args.ckpts
     save_fn = f"{optimizer.__name__.lower()}/{args.save_fn}.png"
     plot(*tracked_vals, ckpts, *labels, log_every, save_fn=save_fn)
