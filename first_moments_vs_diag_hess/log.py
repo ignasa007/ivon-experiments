@@ -83,6 +83,14 @@ if __name__ == "__main__":
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
     LOG_FN = f"{RESULTS_DIR}/logs.csv"
+    kwargs = dict(write_fn=LOG_FN, redo=args.redo, overwrite=args.overwrite)
+
+    def run(cmds, steps, ckpts):
+        for cmd in cmds:
+            cmd += f" --steps {steps} --ckpts {ckpts}"
+            print(f"*** python main.py {cmd} ***")
+            main(cmd, **kwargs)
+            print()
 
     # Datasets
     STEPS, CKPTS = 5000, 20
@@ -92,13 +100,7 @@ if __name__ == "__main__":
         f"--optimizer adam --dataset cifar10",
         f"--optimizer adam --dataset cifar100",
     ]
-    for cmd in cmds:
-        print(f"*** python main.py {cmd} --steps {STEPS} --ckpts {CKPTS} ***")
-        main(
-            f"{cmd} --steps {STEPS} --ckpts {CKPTS}",
-            write_fn=LOG_FN, redo=args.redo, overwrite=args.overwrite
-        )
-        print()
+    run(cmds, STEPS, CKPTS)
 
     # Subset Sizes
     STEPS, CKPTS = 2000, 20
@@ -109,13 +111,7 @@ if __name__ == "__main__":
         f"--optimizer adam --subset_size 20000",
         f"--optimizer adam --subset_size 25000",
     ]
-    for cmd in cmds:
-        print(f"*** python main.py {cmd} --steps {STEPS} --ckpts {CKPTS} ***")
-        main(
-            f"{cmd} --steps {STEPS} --ckpts {CKPTS}",
-            write_fn=LOG_FN, redo=args.redo, overwrite=args.overwrite
-        )
-        print()
+    run(cmds, STEPS, CKPTS)
 
     # Widths
     STEPS, CKPTS = 1000, 20
@@ -125,13 +121,7 @@ if __name__ == "__main__":
         f"--optimizer adam --widths [256]*3",
         f"--optimizer adam --widths [512]*3",
     ]
-    for cmd in cmds:
-        print(f"*** python main.py {cmd} --steps {STEPS} --ckpts {CKPTS} ***")
-        main(
-            f"{cmd} --steps {STEPS} --ckpts {CKPTS}",
-            write_fn=LOG_FN, redo=args.redo, overwrite=args.overwrite
-        )
-        print()
+    run(cmds, STEPS, CKPTS)
 
     # Depths
     STEPS, CKPTS = 1000, 20
@@ -141,13 +131,7 @@ if __name__ == "__main__":
         f"--optimizer adam --widths [64]*5",
         f"--optimizer adam --widths [64]*7",
     ]
-    for cmd in cmds:
-        print(f"*** python main.py {cmd} --steps {STEPS} --ckpts {CKPTS} ***")
-        main(
-            f"{cmd} --steps {STEPS} --ckpts {CKPTS}",
-            write_fn=LOG_FN, redo=args.redo, overwrite=args.overwrite
-        )
-        print()
+    run(cmds, STEPS, CKPTS)
 
     # Activations
     STEPS, CKPTS = 1000, 20
@@ -158,13 +142,7 @@ if __name__ == "__main__":
         f"--optimizer adam --activation tanh",
         f"--optimizer adam --activation sigmoid",
     ]
-    for cmd in cmds:
-        print(f"*** python main.py {cmd} --steps {STEPS} --ckpts {CKPTS} ***")
-        main(
-            f"{cmd} --steps {STEPS} --ckpts {CKPTS}",
-            write_fn=LOG_FN, redo=args.redo, overwrite=args.overwrite
-        )
-        print()
+    run(cmds, STEPS, CKPTS)
 
     # Beta1
     STEPS, CKPTS = 2000, 20
@@ -175,13 +153,7 @@ if __name__ == "__main__":
         f"--optimizer adam --beta1 0.99",
         f"--optimizer adam --beta1 0.999",
     ]
-    for cmd in cmds:
-        print(f"*** python main.py {cmd} --steps {STEPS} --ckpts {CKPTS} ***")
-        main(
-            f"{cmd} --steps {STEPS} --ckpts {CKPTS}",
-            write_fn=LOG_FN, redo=args.redo, overwrite=args.overwrite
-        )
-        print()
+    run(cmds, STEPS, CKPTS)
 
     # Beta2
     STEPS, CKPTS = 2000, 20
@@ -192,13 +164,7 @@ if __name__ == "__main__":
         f"--optimizer adam --beta2 0.99",
         f"--optimizer adam --beta2 0.999",
     ]
-    for cmd in cmds:
-        print(f"*** python main.py {cmd} --steps {STEPS} --ckpts {CKPTS} ***")
-        main(
-            f"{cmd} --steps {STEPS} --ckpts {CKPTS}",
-            write_fn=LOG_FN, redo=args.redo, overwrite=args.overwrite
-        )
-        print()
+    run(cmds, STEPS, CKPTS)
 
     # Epsilon
     STEPS, CKPTS = 2000, 20
@@ -208,13 +174,7 @@ if __name__ == "__main__":
         f"--optimizer adam --eps 1e-6",
         f"--optimizer adam --eps 1e-5",
     ]
-    for cmd in cmds:
-        print(f"*** python main.py {cmd} --steps {STEPS} --ckpts {CKPTS} ***")
-        main(
-            f"{cmd} --steps {STEPS} --ckpts {CKPTS}",
-            write_fn=LOG_FN, redo=args.redo, overwrite=args.overwrite
-        )
-        print()
+    run(cmds, STEPS, CKPTS)
 
     # Weight Decay
     STEPS, CKPTS = 2000, 20
@@ -224,13 +184,7 @@ if __name__ == "__main__":
         f"--optimizer adam --weight_decay 1e-3",
         f"--optimizer adam --weight_decay 1e-2",
     ]
-    for cmd in cmds:
-        print(f"*** python main.py {cmd} --steps {STEPS} --ckpts {CKPTS} ***")
-        main(
-            f"{cmd} --steps {STEPS} --ckpts {CKPTS}",
-            write_fn=LOG_FN, redo=args.redo, overwrite=args.overwrite
-        )
-        print()
+    run(cmds, STEPS, CKPTS)
 
     # Batch Size
     STEPS, CKPTS = 10000, 20
@@ -240,10 +194,21 @@ if __name__ == "__main__":
         f"--optimizer adam --batch_size 1000",
         f"--optimizer adam --batch_size 5000",
     ]
-    for cmd in cmds:
-        print(f"*** python main.py {cmd} --steps {STEPS} --ckpts {CKPTS} ***")
-        main(
-            f"{cmd} --steps {STEPS} --ckpts {CKPTS}",
-            write_fn=LOG_FN, redo=args.redo, overwrite=args.overwrite
-        )
-        print()
+    run(cmds, STEPS, CKPTS)
+
+    # Hutchinson Samples
+    STEPS, CKPTS = 2000, 20
+    cmds = [
+        f"--optimizer adam --hutchinson_samples 100",
+        f"--optimizer adam --hutchinson_samples 500",
+        f"--optimizer adam --hutchinson_samples 1000",
+        f"--optimizer adam --hutchinson_samples 5000",
+    ]
+    run(cmds, STEPS, CKPTS)
+
+    # Very large number of samples?
+    STEPS, CKPTS = 2000, 1
+    cmds = [
+        f"--optimizer adam --hutchinson_samples 50000",
+    ]
+    run(cmds, STEPS, CKPTS)

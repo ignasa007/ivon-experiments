@@ -206,3 +206,15 @@ if __name__ == "__main__":
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
     save_fn = f"{ASSETS}/batch_size.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
+
+    # Hutchinson Samples
+    STEPS, CKPTS = 2000, 20
+    cmds = [
+        (f"--optimizer adam --hutchinson_samples 100", "Samples = 100"),
+        (f"--optimizer adam --hutchinson_samples 500", "Samples = 500"),
+        (f"--optimizer adam --hutchinson_samples 1000", "Samples = 1000"),
+        (f"--optimizer adam --hutchinson_samples 5000", "Samples = 5000"),
+    ]
+    cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
+    save_fn = f"{ASSETS}/hutchinson_samples.png"
+    main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
