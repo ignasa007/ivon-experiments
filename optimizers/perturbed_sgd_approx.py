@@ -19,7 +19,7 @@ class PerturbedSGDApprox(Optimizer):
         ess: float = None,
         hess_init: float = 0.5,
     ) -> None:
-        
+
         if isinstance(lr, Tensor) and lr.numel() != 1:
             raise ValueError("Tensor lr must be 1-element")
         if not 0.0 <= lr:
@@ -99,7 +99,7 @@ class PerturbedSGDApprox(Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
-            
+
             params = []
             grads = []
             exp_avgs = []
@@ -115,7 +115,7 @@ class PerturbedSGDApprox(Optimizer):
                 exp_avgs,
                 state_steps,
             )
-            
+
             grouped_tensors = Optimizer._group_tensors_by_device_and_dtype(
                 [params, grads, exp_avgs, state_steps]
             )

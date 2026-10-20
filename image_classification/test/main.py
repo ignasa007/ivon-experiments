@@ -213,7 +213,7 @@ def do_evalbatch_vadam(batchinput, model, optimizer, repeat: int = 1):
 
 if __name__ == "__main__":
     torch.set_float32_matmul_precision('high')
-    
+
     timer = coro_timer()
     t_init = next(timer)
     print(f">>> Test initiated at {t_init.isoformat()} <<<\n")
@@ -260,7 +260,7 @@ if __name__ == "__main__":
 
     # iterate over all trained runs (0-4), assume model name best_model.pt
     for runfolder in runfolders:
-        
+
         save_name = runfolder.removeprefix(args.train_dir).strip("/").replace("/", "_")
         model_path = pjoin(runfolder, "checkpoint200.pt")
         if not exists(model_path):
@@ -270,7 +270,7 @@ if __name__ == "__main__":
         print(f"loading model from {model_path} ...\n")
         _, model, optimizer = loadcheckpoint(model_path, device)[:3]
         data_loader = get_dataloader(args)
-        
+
         dataset = args.dataset
         ndata = (
             NTRAIN[dataset] - int(args.tvsplit * NTRAIN[dataset])
@@ -278,7 +278,7 @@ if __name__ == "__main__":
             else NTEST[dataset]
         )
         outclass = OUTCLASS[dataset]
-        
+
         if isinstance(optimizer, (IVON, VAdam, PerturbedSGD)):
             if args.testrepeat:
                 prefix = "val_bayes" if args.valdata else "test_bayes"
@@ -302,7 +302,7 @@ if __name__ == "__main__":
         log_ece.send(
             (save_name, prefix, len(data_loader), outputsaver)
         )
-        
+
         with torch.no_grad():
             model.eval()
             if isinstance(optimizer, IVON) and args.testrepeat:

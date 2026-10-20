@@ -200,7 +200,7 @@ class CustomAdam(Optimizer):
 
                 state_steps.append(state["step"])
         return has_complex
-    
+
     def update_scale(self, scale: tuple) -> None:
         assert all(isinstance(f, float) for f in scale)
         self.scale = scale

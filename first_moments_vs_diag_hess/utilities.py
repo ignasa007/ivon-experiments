@@ -125,7 +125,7 @@ def train_gd(
 
     train_inputs = model.prepare_input(images)      # Also initializes lazy layers
     data_loader = DataLoader(TensorDataset(train_inputs, one_hot, labels), batch_size, shuffle=True)
-    
+
     model.reset_parameters(seed=seed)
     model.train()
 
@@ -155,9 +155,9 @@ def train_gd(
             optimizer.step()
             scheduler.step(loss.detach().item())
             losses.append(loss.detach().item())
-        
+
             if step % log_every == 0:
-                _, predicted = torch.max(outputs.data, 1)
+                predicted = torch.argmax(outputs.data, 1)
                 acc = (predicted == y).float().mean().item() * 100
                 print(f"Step [{step}/{steps}], Loss: {loss.item():.2e}, Acc: {acc:.2f}%")
                 tracked_vals.append(evaluate_tracker_fns(tracker_fns))

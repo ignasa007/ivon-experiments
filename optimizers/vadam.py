@@ -20,7 +20,7 @@ class VAdam(Optimizer):
         weight_decay: float = 0,
         decoupled_weight_decay: bool = False, 
     ) -> None:
-        
+
         if isinstance(lr, Tensor) and lr.numel() != 1:
             raise ValueError("Tensor lr must be 1-element")
         if not 0.0 <= lr:
@@ -119,7 +119,7 @@ class VAdam(Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
-            
+
             params_with_grad: list[Tensor] = []
             grads: list[Tensor] = []
             exp_avgs: list[Tensor] = []
@@ -135,7 +135,7 @@ class VAdam(Optimizer):
                 exp_avg_sqs,
                 state_steps,
             )
-            
+
             driver(
                 params_with_grad,
                 grads,
@@ -215,7 +215,7 @@ def _single_tensor(
         bias_correction2 = 1 - beta2**_get_value(state_step)
 
         denom = (exp_avg_sq/bias_correction2).sqrt().add(weight_decay)
-        
+
         step_size = -lr/bias_correction1
         if not decoupled_weight_decay or weight_decay == 0:
             param.addcdiv_(exp_avg, denom, value=step_size)
@@ -236,7 +236,7 @@ def _multi_tensor(
     weight_decay: float,
     decoupled_weight_decay: bool,
 ) -> None:
-    
+
     grouped_tensors = Optimizer._group_tensors_by_device_and_dtype(
         [params, grads, exp_avgs, exp_avg_sqs, state_steps]
     )

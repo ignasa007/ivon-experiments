@@ -228,7 +228,7 @@ def do_trainbatch_ivon(batchinput, model, optimizer):
 
 
 def do_trainbatch_vadam(batchinput, model, optimizer):
-    
+
     images, target = batchinput
     loss_samples, prob_samples = list(), list()
 
@@ -309,7 +309,7 @@ def get_optimizer(args, model):
             momentum=args.beta1,
             weight_decay=args.weight_decay,
         )
-    
+
     elif args.optimizer == "adam":
         return torch.optim.Adam(
             model.parameters(),
@@ -327,7 +327,7 @@ def get_optimizer(args, model):
             weight_decay=args.weight_decay,
             eps=args.eps,
         )
-    
+
     elif args.optimizer == "vadam":
         return VAdam(
             model.parameters(),
@@ -372,10 +372,10 @@ if __name__ == "__main__":
     args = get_args()
     if args.resume:
         print("\n" + "-"*135 + "\n")
-    
+
     timer = coro_timer()
     t_init = next(timer)
-    
+
     print(f">>> Training initiated at {t_init.isoformat()} <<<\n")
 
     print(args, end="\n\n")

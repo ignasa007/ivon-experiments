@@ -18,7 +18,7 @@ class SFRMSProp(Optimizer):
         batch_size: int = 1,
         eps: float = 5e-4,
     ) -> None:
-        
+
         if isinstance(lr, Tensor) and lr.numel() != 1:
             raise ValueError("Tensor lr must be 1-element")
         if not 0.0 <= lr:
@@ -97,7 +97,7 @@ class SFRMSProp(Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
-            
+
             params_with_grad: list[Tensor] = []
             grads: list[Tensor] = []
             exp_avgs: list[Tensor] = []
@@ -113,7 +113,7 @@ class SFRMSProp(Optimizer):
                 exp_avg_sqs,
                 state_steps,
             )
-            
+
             grouped_tensors = Optimizer._group_tensors_by_device_and_dtype(
                 [params_with_grad, grads, exp_avgs, exp_avg_sqs, state_steps]
             )

@@ -271,11 +271,11 @@ if __name__ == "__main__":
     indomain_loader = get_indomain_loader(args)
     ood_prefix = "ood"
     ood_loader = get_ood_loader(args)
-    
+
     aucroc_scores, valid_runs = [], []
 
     for runfolder in runfolders:
-        
+
         save_name = runfolder.removeprefix(args.train_dir).strip("/").replace("/", "_")
         model_path = pjoin(runfolder, "checkpoint200.pt")
         if not exists(model_path):
@@ -287,7 +287,7 @@ if __name__ == "__main__":
         print(f"loading model from {model_path} ...\n")
         _, model, optimizer, _, ddat = loadcheckpoint(model_path, device)
         optimizer.mc_samples = args.testrepeat
-        
+
         dataset = args.dataset
         ndata = NTEST[dataset]
         outclass = OUTCLASS[dataset]
@@ -308,7 +308,7 @@ if __name__ == "__main__":
         log_ece.send(
             (runfolder, indomain_prefix, len(indomain_loader), outputsaver)
         )
-        
+
         with torch.no_grad():
             if isinstance(optimizer, (IVON, VOGN)):
                 model.eval()
@@ -357,7 +357,7 @@ if __name__ == "__main__":
                     dups=args.testsamples,
                     repeat=args.testrepeat,
                 )
-        
+
         log_ece.throw(StopIteration)
         if args.saveoutput:
             outputsaver.close()
@@ -376,7 +376,7 @@ if __name__ == "__main__":
         log_ece.send(
             (runfolder, ood_prefix, len(ood_loader), outputsaver)
         )
-        
+
         with torch.no_grad():
             if isinstance(optimizer, (IVON, VOGN)):
                 model.eval()
@@ -414,7 +414,7 @@ if __name__ == "__main__":
                     dups=args.testsamples,
                     repeat=args.testrepeat,
                 )
-    
+
         log_ece.throw(StopIteration)
         if args.saveoutput:
             outputsaver.close()

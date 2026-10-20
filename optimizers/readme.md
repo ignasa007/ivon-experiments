@@ -11,7 +11,7 @@ The [official implementation of IVON](https://github.com/team-approx-bayes/ivon)
     1. perturb parameters according to an exponentially decreasing variance schedule,
     2. compute gradients,
     3. update original parameters.
-    
+
     Take note of the following hyper-parameters:
     1. `ess` &ndash; the effective sample size is usually set to the number of data samples, but can be set to a smaller value, if appropriate.
     2. `hess_init` &ndash; the initial curvature-estimate from IVON, used for computing the curvature estimate at time $t$ as $\beta_2^{t}s_0$.

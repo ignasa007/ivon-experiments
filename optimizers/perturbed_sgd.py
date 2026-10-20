@@ -30,7 +30,7 @@ class PerturbedSGDOld(Optimizer):
         hess_init: float = 0.5,
         clip_radius: float = torch.inf,
     ) -> None:
-        
+
         if isinstance(lr, Tensor) and lr.numel() != 1:
             raise ValueError("Tensor lr must be 1-element")
         if not 0.0 <= lr:
@@ -115,7 +115,7 @@ class PerturbedSGDOld(Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
-            
+
             params = []
             grads = []
             exp_avgs = []
@@ -153,7 +153,7 @@ class PerturbedSGDOld(Optimizer):
                     torch._foreach_clamp_min_(updates, [-1.*clip_radius for clip_radius in clip_radii])
                 # Update
                 torch._foreach_addcdiv_(params, updates, scalings, value=-lr)
-        
+
         return loss
 
     @torch.no_grad()
@@ -203,7 +203,7 @@ class PerturbedSGDNew(PerturbedSGDOld):
         hess_init: float = 0.5,
         clip_radius: float = torch.inf,
     ) -> None:
-        
+
         super().__init__(params, lr, betas, weight_decay, ess, hess_init, clip_radius)
 
     def _eager_state_init(self):
@@ -223,7 +223,7 @@ class PerturbedSGDNew(PerturbedSGDOld):
                 loss = closure()
 
         for group in self.param_groups:
-            
+
             state_step = group["step"]
             exp_avg = group["exp_avg"]
             lr = group["lr"]

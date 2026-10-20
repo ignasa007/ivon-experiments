@@ -56,7 +56,7 @@ def make_optim_kwargs(args):
     elif args.optimizer in ("adam", "adamw"):
         optim_kwargs.update(betas=(args.beta1, args.beta2), eps=args.eps)
     return optim_kwargs
-    
+
 def make_tracker_fns(args):
     tracker_fns = list()
     for tracker in args.trackers:

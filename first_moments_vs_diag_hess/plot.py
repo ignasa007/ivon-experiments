@@ -29,7 +29,7 @@ def plot(axs, read_fn: str, cmd: str, label: str) -> None:
     if not matches.any():
         print("No matching experiment found; skipping.")
         return
-    
+
     output_fn = df.iloc[np.where(matches)[0][-1]].output_fn
     with open(f"{RESULTS}/{output_fn}", "rb") as f:
         out = pickle.load(f)

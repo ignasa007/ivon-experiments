@@ -21,7 +21,7 @@ def main(cmd: str, write_fn: str, redo: bool = False, overwrite: bool = False) -
     alphabet = list(string.ascii_letters + string.digits)
     run_id = "".join(np.random.choice(alphabet, 12))
     output_fn = f"{run_id}.pickle"
-    
+
     args = parser.parse_args(cmd.split())
     row = vars(args).copy()
 
