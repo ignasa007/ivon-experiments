@@ -16,7 +16,7 @@ args = parser.parse_args(cmd.split())
 _, out = run(args)
 tracked_vals = out[1:]
 labels = ("Exact Hess Diag", "Estimated Hess Diag")
-log_every = args.epochs // args.ckpts
+log_every = args.steps // args.ckpts
 plot(*tracked_vals, ckpts, *labels, log_every, save_fn=save_fn)
 
 # Verify that the GGN and Hessian diagonals match.
