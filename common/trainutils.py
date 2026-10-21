@@ -826,6 +826,8 @@ def loadcheckpoint(fromfile, device=torch.device("cpu"), epochs=200):
         "AdaHessian": AdaHessian,
         "IVON": IVON,
         "VAdam": VAdam,
+        # Backward compatibility
+        "IVAdam": VAdam,
         "PerturbedSGD": PerturbedSGD,
         "PerturbedSGDApprox": PerturbedSGDApprox,
         "SFRMSProp": SFRMSProp,

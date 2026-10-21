@@ -18,7 +18,8 @@ class VAdam(Optimizer):
         lr: float | Tensor = 1e-3,
         betas: tuple[float | Tensor, float | Tensor] = (0.9, 0.999),
         weight_decay: float = 0,
-        decoupled_weight_decay: bool = False, 
+        decoupled_weight_decay: bool = None,
+        **kwargs
     ) -> None:
 
         if isinstance(lr, Tensor) and lr.numel() != 1:
@@ -41,6 +42,9 @@ class VAdam(Optimizer):
         if isinstance(betas[1], Tensor) and betas[1].numel() != 1:
             raise ValueError("Tensor betas[1] must be 1-element")
         betas = (_to_scalar(betas[0]), _to_scalar(betas[1]))
+        # Backward compatibility
+        if decoupled_weight_decay is None:
+            decoupled_weight_decay = kwargs.get("decoupled_wd", False)
 
         defaults = {
             "lr": lr,

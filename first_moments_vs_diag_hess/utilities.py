@@ -10,6 +10,7 @@ from torch.utils.data import Subset, TensorDataset, DataLoader
 from torch.nn.utils import parameters_to_vector
 from torch.nn import functional as F
 from torchvision import transforms
+from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
 
 from constants import DATASTORE
@@ -124,7 +125,10 @@ def train_gd(
     ).to(device)
 
     train_inputs = model.prepare_input(images)      # Also initializes lazy layers
-    data_loader = DataLoader(TensorDataset(train_inputs, one_hot, labels), batch_size, shuffle=True)
+    data_loader = DataLoader(
+        TensorDataset(train_inputs, one_hot, labels),
+        batch_size, shuffle=batch_size!=subset_size
+    )
 
     model.reset_parameters(seed=seed)
     model.train()
@@ -290,7 +294,8 @@ def plot(xs, ys, ckpts, xlabel, ylabel, log_every, save_fn=None):
         ax.set_yscale("log")
         ax.grid()
         ax.tick_params(axis="both", which="major", labelsize=15)
-        ax.set_title(f"Checkpoint {ckpt*log_every}", fontsize=20)
+        r2 = r2_score(np.log(y), power_law_offset(x, *opt))
+        ax.set_title(f"Checkpoint {ckpt*log_every}, $R^2 = {r2:.3f}$", fontsize=20)
     for ax in axs[-1,:]:
         ax.set_xlabel(xlabel, fontsize=20)
     for ax in axs[:,0]:

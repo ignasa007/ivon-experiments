@@ -36,10 +36,10 @@ def plot(axs, read_fn: str, cmd: str, label: str) -> None:
         losses, laws = out["losses"], out["laws"]
 
     axs[0].plot(np.arange(1, len(losses)+1), losses, linewidth=5, label=label)
-    steps, a, b, c = zip(*laws)
+    steps, a, b, c, r2 = zip(*laws)
     axs[1].plot(steps, c, linewidth=5, label=label)
-    axs[2].plot(steps, b, linewidth=5, label=label)
-    # axs[3].plot(steps, a, linewidth=5, label=label)
+    # axs[2].plot(steps, b, linewidth=5, label=label)
+    axs[2].plot(steps, r2, linewidth=5, label=label)
 
 
 def main(cmds: List[Tuple[str, str]], steps: int, read_fn: str, save_fn: str) -> None:
@@ -52,14 +52,14 @@ def main(cmds: List[Tuple[str, str]], steps: int, read_fn: str, save_fn: str) ->
 
     axs[0].set_yscale("log")
     axs[0].set_ylabel("Loss", fontsize=24)
-    # axs[0].legend(fontsize=21, framealpha=1.0, loc="upper right")
     axs[1].hlines([0.5], 0, steps, linewidth=5, linestyle="--", colors="black")
     axs[1].set_ylim(0, 1)
     axs[1].set_ylabel(r"Exponent, $\gamma$", fontsize=24)
     # axs[2].set_ylim(1, 1000)
-    axs[2].set_yscale("log")
-    axs[2].set_ylabel(r"Scaling, $\beta$", fontsize=24)
-    # axs[3].set_ylabel(r"Offset, $\epsilon$", fontsize=24)
+    # axs[2].set_yscale("log")
+    # axs[2].set_ylabel(r"Scaling, $\beta$", fontsize=24)
+    axs[2].set_ylim(0, 1)
+    axs[2].set_ylabel(r"$R^2$ Score", fontsize=24)
 
     for ax in axs:
         ax.set_xlabel("Steps", fontsize=24)
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     # Subset Sizes
     STEPS, CKPTS = 2000, 20
     cmds = [
-        (f"--optimizer adam --subset_size 5000", "N = 5k"),
+        (f"--optimizer adam --subset_size 5000", "Dataset Size = 5k"),
         (f"--optimizer adam --subset_size 10000", "N = 10k"),
         (f"--optimizer adam --subset_size 15000", "N = 15k"),
         (f"--optimizer adam --subset_size 20000", "N = 20k"),
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     # Widths
     STEPS, CKPTS = 1000, 20
     cmds = [
-        (f"--optimizer adam --widths [64]*3", "D = 64"),
+        (f"--optimizer adam --widths [64]*3", "Width = 64"),
         (f"--optimizer adam --widths [128]*3", "D = 128"),
         (f"--optimizer adam --widths [256]*3", "D = 256"),
         (f"--optimizer adam --widths [512]*3", "D = 512"),
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     # Depths
     STEPS, CKPTS = 1000, 20
     cmds = [
-        (f"--optimizer adam --widths [64]*1", "L = 2"),
+        (f"--optimizer adam --widths [64]*1", "Depth = 2"),
         (f"--optimizer adam --widths [64]*3", "L = 4"),
         (f"--optimizer adam --widths [64]*5", "L = 6"),
         (f"--optimizer adam --widths [64]*7", "L = 8"),
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     # Weight Decay
     STEPS, CKPTS = 2000, 20
     cmds = [
-        (f"--optimizer adam --weight_decay 0", r"$\lambda=0$"),
+        (f"--optimizer adam --weight_decay 0", r"Weight Decay$=0$"),
         (f"--optimizer adam --weight_decay 1e-4", r"$\lambda=10^{-4}$"),
         (f"--optimizer adam --weight_decay 1e-3", r"$\lambda=10^{-3}$"),
         (f"--optimizer adam --weight_decay 1e-2", r"$\lambda=10^{-2}$"),
@@ -198,7 +198,7 @@ if __name__ == "__main__":
     # Batch Size
     STEPS, CKPTS = 10000, 20
     cmds = [
-        (f"--optimizer adam --batch_size 100", "BS = 100"),
+        (f"--optimizer adam --batch_size 100", "Batch Size = 100"),
         (f"--optimizer adam --batch_size 500", "BS = 500"),
         (f"--optimizer adam --batch_size 1000", "BS = 1k"),
         (f"--optimizer adam --batch_size 5000", "BS = 5k"),
@@ -210,10 +210,10 @@ if __name__ == "__main__":
     # Hutchinson Samples
     STEPS, CKPTS = 2000, 20
     cmds = [
-        (f"--optimizer adam --hutchinson_samples 100", "Samples = 100"),
-        (f"--optimizer adam --hutchinson_samples 500", "Samples = 500"),
-        (f"--optimizer adam --hutchinson_samples 1000", "Samples = 1000"),
-        (f"--optimizer adam --hutchinson_samples 5000", "Samples = 5000"),
+        (f"--optimizer adam --hutchinson_samples 100", "Hutchinson Samples = 100"),
+        (f"--optimizer adam --hutchinson_samples 500", "HS = 500"),
+        (f"--optimizer adam --hutchinson_samples 1000", "HS = 1000"),
+        (f"--optimizer adam --hutchinson_samples 5000", "HS = 5000"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
     save_fn = f"{ASSETS}/hutchinson_samples.png"

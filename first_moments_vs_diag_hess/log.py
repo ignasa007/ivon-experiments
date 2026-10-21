@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 import numpy as np
 from scipy.optimize import curve_fit
+from sklearn.metrics import r2_score
 import pandas as pd
 
 from main import parser, run
@@ -48,7 +49,8 @@ def main(cmd: str, write_fn: str, redo: bool = False, overwrite: bool = False) -
         p0 = [0., 75., 0.5]
         bounds = (0, np.inf)
         opt, _ = curve_fit(power_law_offset, x, np.log(y), p0=p0, bounds=bounds, maxfev=10000)
-        laws.append((i*log_every, *opt))
+        r2 = r2_score(np.log(y), power_law_offset(x, *opt))
+        laws.append((i*log_every, *opt, r2))
 
     with open(f"{RESULTS_DIR}/{output_fn}", "wb") as f:
         pickle.dump({"args": args, "losses": losses, "laws": laws}, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -85,7 +87,7 @@ if __name__ == "__main__":
     LOG_FN = f"{RESULTS_DIR}/logs.csv"
     kwargs = dict(write_fn=LOG_FN, redo=args.redo, overwrite=args.overwrite)
 
-    def run(cmds, steps, ckpts):
+    def driver(cmds, steps, ckpts):
         for cmd in cmds:
             cmd += f" --steps {steps} --ckpts {ckpts}"
             print(f"*** python main.py {cmd} ***")
@@ -100,7 +102,7 @@ if __name__ == "__main__":
         f"--optimizer adam --dataset cifar10",
         f"--optimizer adam --dataset cifar100",
     ]
-    run(cmds, STEPS, CKPTS)
+    driver(cmds, STEPS, CKPTS)
 
     # Subset Sizes
     STEPS, CKPTS = 2000, 20
@@ -111,7 +113,7 @@ if __name__ == "__main__":
         f"--optimizer adam --subset_size 20000",
         f"--optimizer adam --subset_size 25000",
     ]
-    run(cmds, STEPS, CKPTS)
+    driver(cmds, STEPS, CKPTS)
 
     # Widths
     STEPS, CKPTS = 1000, 20
@@ -121,7 +123,7 @@ if __name__ == "__main__":
         f"--optimizer adam --widths [256]*3",
         f"--optimizer adam --widths [512]*3",
     ]
-    run(cmds, STEPS, CKPTS)
+    driver(cmds, STEPS, CKPTS)
 
     # Depths
     STEPS, CKPTS = 1000, 20
@@ -131,7 +133,7 @@ if __name__ == "__main__":
         f"--optimizer adam --widths [64]*5",
         f"--optimizer adam --widths [64]*7",
     ]
-    run(cmds, STEPS, CKPTS)
+    driver(cmds, STEPS, CKPTS)
 
     # Activations
     STEPS, CKPTS = 1000, 20
@@ -142,7 +144,7 @@ if __name__ == "__main__":
         f"--optimizer adam --activation tanh",
         f"--optimizer adam --activation sigmoid",
     ]
-    run(cmds, STEPS, CKPTS)
+    driver(cmds, STEPS, CKPTS)
 
     # Beta1
     STEPS, CKPTS = 2000, 20
@@ -153,7 +155,7 @@ if __name__ == "__main__":
         f"--optimizer adam --beta1 0.99",
         f"--optimizer adam --beta1 0.999",
     ]
-    run(cmds, STEPS, CKPTS)
+    driver(cmds, STEPS, CKPTS)
 
     # Beta2
     STEPS, CKPTS = 2000, 20
@@ -164,7 +166,7 @@ if __name__ == "__main__":
         f"--optimizer adam --beta2 0.99",
         f"--optimizer adam --beta2 0.999",
     ]
-    run(cmds, STEPS, CKPTS)
+    driver(cmds, STEPS, CKPTS)
 
     # Epsilon
     STEPS, CKPTS = 2000, 20
@@ -174,7 +176,7 @@ if __name__ == "__main__":
         f"--optimizer adam --eps 1e-6",
         f"--optimizer adam --eps 1e-5",
     ]
-    run(cmds, STEPS, CKPTS)
+    driver(cmds, STEPS, CKPTS)
 
     # Weight Decay
     STEPS, CKPTS = 2000, 20
@@ -184,7 +186,7 @@ if __name__ == "__main__":
         f"--optimizer adam --weight_decay 1e-3",
         f"--optimizer adam --weight_decay 1e-2",
     ]
-    run(cmds, STEPS, CKPTS)
+    driver(cmds, STEPS, CKPTS)
 
     # Batch Size
     STEPS, CKPTS = 10000, 20
@@ -194,7 +196,7 @@ if __name__ == "__main__":
         f"--optimizer adam --batch_size 1000",
         f"--optimizer adam --batch_size 5000",
     ]
-    run(cmds, STEPS, CKPTS)
+    driver(cmds, STEPS, CKPTS)
 
     # Hutchinson Samples
     STEPS, CKPTS = 2000, 20
@@ -204,11 +206,11 @@ if __name__ == "__main__":
         f"--optimizer adam --hutchinson_samples 1000",
         f"--optimizer adam --hutchinson_samples 5000",
     ]
-    run(cmds, STEPS, CKPTS)
+    driver(cmds, STEPS, CKPTS)
 
     # Very large number of samples?
     STEPS, CKPTS = 2000, 1
     cmds = [
         f"--optimizer adam --hutchinson_samples 50000",
     ]
-    run(cmds, STEPS, CKPTS)
+    driver(cmds, STEPS, CKPTS)
