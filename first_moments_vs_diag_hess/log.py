@@ -205,6 +205,7 @@ if __name__ == "__main__":
         f"--optimizer adam --hutchinson_samples 500",
         f"--optimizer adam --hutchinson_samples 1000",
         f"--optimizer adam --hutchinson_samples 5000",
+        f"--optimizer adam --trackers exp_avg_sq exact_hess_diag",
     ]
     driver(cmds, STEPS, CKPTS)
 

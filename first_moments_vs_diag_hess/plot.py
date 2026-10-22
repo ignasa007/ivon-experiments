@@ -201,7 +201,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --batch_size 100", "Batch Size = 100"),
         (f"--optimizer adam --batch_size 500", "BS = 500"),
         (f"--optimizer adam --batch_size 1000", "BS = 1k"),
-        (f"--optimizer adam --batch_size 5000", "BS = 5k"),
+        (f"--optimizer adam --batch_size 5000", "Full Batch"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
     save_fn = f"{ASSETS}/batch_size.png"
@@ -214,6 +214,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --hutchinson_samples 500", "HS = 500"),
         (f"--optimizer adam --hutchinson_samples 1000", "HS = 1000"),
         (f"--optimizer adam --hutchinson_samples 5000", "HS = 5000"),
+        (f"--optimizer adam --trackers exp_avg_sq exact_hess_diag", "Exact"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
     save_fn = f"{ASSETS}/hutchinson_samples.png"
