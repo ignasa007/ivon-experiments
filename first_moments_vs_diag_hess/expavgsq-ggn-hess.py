@@ -9,7 +9,7 @@ from utilities import power_law_offset, power_law_offset_format
 from main import parser, tracker_fns_map, run
 
 
-CMD = "--optimizer adam --steps 1000 --ckpts 5 --trackers exp_avg_sq exact_ggn_diag exact_hess_diag"
+CMD = "--optimizer adam --widths [32]*1 --steps 1000 --ckpts 5 --trackers exp_avg_sq exact_ggn_diag exact_hess_diag"
 SAVE_FN = "assets/adam/expavgsq-ggn-hess.png"
 CKPTS = [1, 3, 5]
 
@@ -31,7 +31,7 @@ for i, (xs, ys, xlabel, ylabel, axs_row) in enumerate(zip(
     for j, (ckpt, ax) in enumerate(zip(CKPTS, axs_row)):
 
         # Checkpoint in the title only in top row
-        title = f"Checkpoint {ckpt*log_every}" if i == 0 else ""
+        title = f"Checkpoint {ckpt*log_every}"
         x, y = np.asarray(xs[ckpt]), np.asarray(ys[ckpt])
         mask = (x > 1e-24) & (y > 1e-24)
         x, y = x[mask], y[mask]
@@ -46,7 +46,7 @@ for i, (xs, ys, xlabel, ylabel, axs_row) in enumerate(zip(
             ax.plot(x_fit, y_fit, linewidth=5, linestyle="--", color="green", label=power_law_offset_format(*opt))
             ax.legend(fontsize=20, framealpha=1, markerscale=8)
             r2 = r2_score(np.log(y), power_law_offset(x, *opt))
-            title = f"{title}, $R^2 = {r2:.3f}$" if title else f"$R^2 = {r2:.3f}$"
+            title = f"{title}, $R^2 = {r2:.3f}$"
         
         ax.set_xscale("log")
         ax.set_yscale("log")
