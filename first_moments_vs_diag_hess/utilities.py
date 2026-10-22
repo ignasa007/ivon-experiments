@@ -253,7 +253,22 @@ def estimate_hess_diag(X, Y, model, loss_type, optimizer, device, hutchinson_sam
     hess_diag = sum_samples / hutchinson_samples
     return hess_diag
 
+def exact_ggn_diag(X, Y, model, loss_type, optimizer, device):
+    assert loss_type == "mean squared error"
+    names = [name for name, _ in model.named_parameters()]
+    params = dict(model.named_parameters())
+    outputs = model(X).flatten()
+    ggn_diag = {name: torch.zeros_like(params[name]) for name in names}
+    for idx in range(outputs.numel()):
+        model.zero_grad()
+        outputs[idx].backward(retain_graph=True)
+        for name in names:
+            ggn_diag[name] += params[name].grad.square()
+    model.zero_grad()
+    return 1/X.size(0) * torch.cat([ggn_diag[name].flatten() for name in params])
+
 def estimate_ggn_diag(X, Y, model, loss_type, optimizer, device, hutchinson_samples):
+    assert loss_type == "mean squared error"
     def f(params):
         return functional_call(model, dict(params), (X,))
     names = [name for name, _ in model.named_parameters()]
@@ -264,6 +279,7 @@ def estimate_ggn_diag(X, Y, model, loss_type, optimizer, device, hutchinson_samp
         _, Jv = jvp(f, (params,), (random_vectors,))
         _, vjp_fn = vjp(f, params)
         JtJv = vjp_fn(Jv)[0]
+        # The 1/N scaling accounts for the curvature of the loss wrt network output
         sum_samples += 1/X.size(0) * torch.cat([(random_vectors[name]*JtJv[name]).reshape(-1) for name in names])
     ggn_diag = sum_samples / hutchinson_samples
     return ggn_diag
@@ -278,6 +294,7 @@ def plot(xs, ys, ckpts, xlabel, ylabel, log_every, save_fn=None):
 
     fig, axs = plt.subplots(2, 3, figsize=(7.5*3, 4.5*2))
     for i, (ckpt, ax) in enumerate(zip(ckpts, axs.flatten())):
+        title = f"Checkpoint {ckpt*log_every}"
         x, y = np.asarray(xs[ckpt]), np.asarray(ys[ckpt])
         mask = (x > 1e-24) & (y > 1e-24)
         x, y = x[mask], y[mask]
@@ -290,12 +307,13 @@ def plot(xs, ys, ckpts, xlabel, ylabel, log_every, save_fn=None):
             y_fit = np.exp(power_law_offset(x_fit, *opt))
             ax.plot(x_fit, y_fit, linewidth=5, linestyle="--", color="green", label=power_law_offset_format(*opt))
             ax.legend(fontsize=20, framealpha=1, markerscale=8)
+            r2 = r2_score(np.log(y), power_law_offset(x, *opt))
+            title = f"{title}, $R^2 = {r2:.3f}$"
         ax.set_xscale("log")
         ax.set_yscale("log")
         ax.grid()
         ax.tick_params(axis="both", which="major", labelsize=15)
-        r2 = r2_score(np.log(y), power_law_offset(x, *opt))
-        ax.set_title(f"Checkpoint {ckpt*log_every}, $R^2 = {r2:.3f}$", fontsize=20)
+        ax.set_title(title, fontsize=20)
     for ax in axs[-1,:]:
         ax.set_xlabel(xlabel, fontsize=20)
     for ax in axs[:,0]:
