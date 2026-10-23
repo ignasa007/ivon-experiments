@@ -100,6 +100,7 @@ def train_gd(
     optim_kwargs: dict,
     steps: int,
     log_every: int,
+    ckpts: list[int],
     device: torch.device,
     seed: int,
     tracker_fns: list[Callable] = [],
@@ -145,7 +146,8 @@ def train_gd(
         return out
 
     losses, tracked_vals = [], []
-    tracked_vals.append(evaluate_tracker_fns(tracker_fns))
+    if log_every is not None or ckpts is not None and 0 in ckpts:
+        tracked_vals.append(evaluate_tracker_fns(tracker_fns))
     step = 1
 
     while step <= steps:
@@ -160,7 +162,7 @@ def train_gd(
             scheduler.step(loss.detach().item())
             losses.append(loss.detach().item())
 
-            if step % log_every == 0:
+            if log_every is not None and step % log_every == 0 or ckpts is not None and step in ckpts:
                 predicted = torch.argmax(outputs.data, 1)
                 acc = (predicted == y).float().mean().item() * 100
                 print(f"Step [{step}/{steps}], Loss: {loss.item():.2e}, Acc: {acc:.2f}%")

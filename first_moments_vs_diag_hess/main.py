@@ -156,8 +156,9 @@ parser.add_argument(
 )
 parser.add_argument(
     "--ckpts",
+    nargs="+",
     type=int,
-    default=CKPTS
+    default=[CKPTS]
 )
 parser.add_argument(
     "--trackers",
@@ -204,7 +205,7 @@ def run(args):
         Model=Model, widths=widths, model_kwargs=model_kwargs,
         act_name=args.activation, act_kwargs=dict(),    # don't currently support `act_kwargs`
         loss_type=loss_type, Optimizer=Optimizer, optim_kwargs=optim_kwargs,
-        steps=args.steps, log_every=log_every,
+        steps=args.steps, log_every=log_every, ckpts=None,
         device=device, seed=args.seed, tracker_fns=tracker_fns,
     )
 
