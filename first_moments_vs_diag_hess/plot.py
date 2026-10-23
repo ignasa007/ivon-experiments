@@ -105,7 +105,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --subset_size 25000", "N = 25k"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/subset_sizes.png"
+    save_fn = f"{ASSETS}/subset-sizes.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
 
     # Widths
@@ -192,7 +192,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --weight_decay 1e-2", r"$\lambda=10^{-2}$"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/weight_decay.png"
+    save_fn = f"{ASSETS}/weight-decay.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
 
     # Batch Size
@@ -204,7 +204,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --batch_size 5000", "Full Batch"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/batch_size.png"
+    save_fn = f"{ASSETS}/batch-size.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
 
     # Hutchinson Samples
@@ -217,5 +217,5 @@ if __name__ == "__main__":
         (f"--optimizer adam --trackers exp_avg_sq exact_hess_diag", "Exact"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/hutchinson_samples.png"
+    save_fn = f"{ASSETS}/hutchinson-samples.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
