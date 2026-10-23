@@ -7,7 +7,7 @@ from utilities import plot
 # Verify the implementation by comparing the analytically computed Hessian-diagonal against the MC-estimated one.
 
 cmd = "--optimizer adam --widths [32]*1 --trackers exact_hess_diag hess_diag --hutchinson_samples 10000"
-save_fn = f"{ASSETS}/adam/check-hess-estimation.png"
+save_fn = f"{ASSETS}/implementation-checks/check-hess-estimation.png"
 ckpts = [1, 3, 5, 7, 9, 10]
 
 print(f"*** python main.py {cmd} ***")
@@ -22,7 +22,7 @@ plot(*tracked_vals, ckpts, *labels, log_every, save_fn=save_fn)
 # Verify the implementation by comparing the analytically computed GGN-diagonal against the MC-estimated one.
 
 cmd = "--optimizer adam --widths [32]*1 --trackers exact_ggn_diag ggn_diag --hutchinson_samples 10000"
-save_fn = f"{ASSETS}/adam/check-ggn-estimation.png"
+save_fn = f"{ASSETS}/implementation-checks/check-ggn-estimation.png"
 ckpts = [1, 3, 5, 7, 9, 10]
 
 print(f"*** python main.py {cmd} ***")
@@ -37,7 +37,7 @@ plot(*tracked_vals, ckpts, *labels, log_every, save_fn=save_fn)
 # Verify that the GGN and Hessian diagonals match.
 
 cmd = "--optimizer adam --widths [32]*1 --trackers ggn_diag hess_diag --hutchinson_samples 10000"
-save_fn = f"{ASSETS}/adam/check-ggn-vs-hess.png"
+save_fn = f"{ASSETS}/implementation-checks/check-ggn-vs-hess.png"
 ckpts = [1, 3, 5, 7, 9, 10]
 
 print(f"*** python main.py {cmd} ***")

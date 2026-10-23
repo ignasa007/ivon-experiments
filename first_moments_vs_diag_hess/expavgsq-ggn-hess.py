@@ -10,7 +10,7 @@ from main import parser, tracker_fns_map, run
 
 
 CMD = "--optimizer adam --widths [32]*1 --steps 1000 --ckpts 5 --trackers exp_avg_sq exact_ggn_diag exact_hess_diag"
-SAVE_FN = "assets/adam/expavgsq-ggn-hess.png"
+SAVE_FN = "assets/implementation-checks/expavgsq-ggn-hess.png"
 CKPTS = [1, 3, 5]
 
 args = parser.parse_args(CMD.split())

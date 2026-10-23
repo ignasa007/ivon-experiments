@@ -64,5 +64,5 @@ if __name__ == "__main__":
     cmd = f"--optimizer adam"
     ckpts = [1, 3, 5, 7, 9, 10]
     print(f"*** python main.py {cmd} ***")
-    driver(cmd, ckpts, f"{ASSETS}/adam/regressing-raw.png")
+    driver(cmd, ckpts, f"{ASSETS}/implementation-checks/regressing-raw.png")
     print()
