@@ -170,5 +170,5 @@ def driver(cmd: str, ckpts: list, save_fn: str) -> None:
 driver(
     "--optimizer adam --subset_size 1000 --widths [] --trackers gradient exact_hess_diag --seed 0",
     ["Random Initialization"] + ["Perturbed OLS Solution"]*4 + ["OLS Solution"],
-    save_fn="assets/adam/linear.png"
+    save_fn="assets/theory/linear.png"
 )
