@@ -1,5 +1,6 @@
 import os
 
+from tqdm import tqdm
 import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
@@ -46,23 +47,71 @@ def power_law(x, beta=1., gamma=1.):
 
 if __name__ == "__main__":
 
-    size = 100
+    size = 10
     mc_samples = 100
     unif_deltas = np.linspace(0.1, 1, 10)
-    save_fn = f"{ASSETS}/theory/power-law-log-space-fit.png"
+    np.random.seed(0)
 
     a = np.exp(np.random.uniform(-10, 0, size))
     A = np.diag(a)
+    log_mod_a = np.log(np.abs(a))
 
-    fig, axs = plt.subplots(1, 2, figsize=(6.4*2, 4.8*1))
+    save_fn = f"{ASSETS}/theory/log-space-arbitrary-param.png"
+    fig, axs = plt.subplots(1, 1, figsize=(6.4*1, 4.8*1))
     theoretical_opts, empirical_opts = list(), list()
 
-    for unif_delta in unif_deltas:
+    for unif_delta in tqdm(unif_deltas):
 
         b = np.random.uniform(-5, 5, (size, 1))
         c = 10 * np.random.randn(1).item()
 
-        log_mod_a = np.log(np.abs(a))
+        noise = np.random.uniform(-unif_delta, +unif_delta, (size, mc_samples))
+        points = minima(A, b, c) + noise
+        grads = grad(points, A, b, c)
+        hess_diags = hess_diag(points, A, b, c)
+
+        log_mod_grads = np.log(np.abs(grads))
+        gamma_opts = 0.5 * (
+            np.cov(log_mod_a, log_mod_grads, bias=True, rowvar=False)[0, 1:] \
+            / np.var(log_mod_grads, axis=0)
+        )
+        beta_opts = np.exp(np.mean(log_mod_a) - 2*gamma_opts * np.mean(log_mod_grads))
+        theoretical_opts.extend(list(zip(beta_opts, gamma_opts)))
+
+        for g, h in zip(grads.T, hess_diags.T):
+            p0 = [75., 0.5]
+            bounds = (0, np.inf)
+            opt, _ = curve_fit(
+                power_law, np.square(g), np.log(h),
+                p0=p0, bounds=bounds, maxfev=10000
+            )
+            empirical_opts.append(opt)
+
+    theoretical_betas, theoretical_gammas = zip(*theoretical_opts)
+    empirical_betas, empirical_gammas = zip(*empirical_opts)
+
+    axs.scatter(empirical_gammas, theoretical_gammas)
+    axs.set_xlim(0.15, 0.75)
+    axs.set_ylim(0.15, 0.75)
+    axs.tick_params(axis="both", which="major", labelsize=15)
+    axs.set_xlabel(rf"Empirical $\gamma^{{\star}}$", fontsize=20)
+    axs.set_ylabel(rf"Theoretical $\gamma^{{\star}}$", fontsize=20)
+    axs.grid()
+
+    fig.tight_layout()
+    os.makedirs(os.path.dirname(save_fn), exist_ok=True)
+    plt.savefig(save_fn)
+    plt.close()
+
+    save_fn = f"{ASSETS}/theory/log-space-random-pert.png"
+    fig, axs = plt.subplots(1, 2, figsize=(6.4*2, 4.8*1))
+    theoretical_opts, empirical_opts = list(), list()
+
+    for unif_delta in tqdm(unif_deltas):
+
+        b = np.random.uniform(-5, 5, (size, 1))
+        c = 10 * np.random.randn(1).item()
+
         gamma_opt = 0.5 * (1 + 1/np.var(log_mod_a)) ** (-1)
         beta_opt = np.exp(
             (1-2*gamma_opt) * np.mean(log_mod_a) - 2*gamma_opt * (np.log(unif_delta)-1)
@@ -71,13 +120,13 @@ if __name__ == "__main__":
 
         noise = np.random.uniform(-unif_delta, +unif_delta, (size, mc_samples))
         points = minima(A, b, c) + noise
-        grad_sqs = np.square(grad(points, A, b, c)).flatten()
+        grads = grad(points, A, b, c).flatten()
         hess_diags = hess_diag(points, A, b, c).flatten()
 
         p0 = [75., 0.5]
         bounds = (0, np.inf)
         opt, _ = curve_fit(
-            power_law, grad_sqs, np.log(hess_diags),
+            power_law, np.square(grads), np.log(hess_diags),
             p0=p0, bounds=bounds, maxfev=10000
         )
         empirical_opts.append(opt)
