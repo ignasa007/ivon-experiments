@@ -57,7 +57,8 @@ if __name__ == "__main__":
     log_mod_a = np.log(np.abs(a))
 
     save_fn = f"{ASSETS}/theory/log-space-arbitrary-param.png"
-    fig, axs = plt.subplots(1, 1, figsize=(6.4*1, 4.8*1))
+    fig, axs = plt.subplots(1, 1, figsize=(7.5*1, 4.8*1))
+    cmap = "managua"
     theoretical_opts, empirical_opts = list(), list()
 
     for unif_delta in tqdm(unif_deltas):
@@ -87,16 +88,27 @@ if __name__ == "__main__":
             )
             empirical_opts.append(opt)
 
-    theoretical_betas, theoretical_gammas = zip(*theoretical_opts)
-    empirical_betas, empirical_gammas = zip(*empirical_opts)
+    # Permuting because otherwise the color for \delta = 1 overlays all others
+    perm = np.random.permutation(unif_deltas.size*mc_samples)
+    theoretical_betas, theoretical_gammas = zip(*np.array(theoretical_opts)[perm])
+    empirical_betas, empirical_gammas = zip(*np.array(empirical_opts)[perm])
 
-    axs.scatter(empirical_gammas, theoretical_gammas)
-    axs.set_xlim(0.15, 0.75)
-    axs.set_ylim(0.15, 0.75)
+    xs = 0.1, 0.8
+    ticks = [0.2, 0.4, 0.6, 0.8]
+    axs.plot(xs, xs, linewidth=2, linestyle="--", color="black")
+    colors = np.repeat(unif_deltas, mc_samples)[perm]
+    scatter = axs.scatter(empirical_gammas, theoretical_gammas, c=colors, cmap=cmap, s=45)
+    axs.set_xlim(*xs); axs.set_ylim(*xs)
+    axs.set_xticks(ticks); axs.set_yticks(ticks)
     axs.tick_params(axis="both", which="major", labelsize=15)
     axs.set_xlabel(rf"Empirical $\gamma^{{\star}}$", fontsize=20)
     axs.set_ylabel(rf"Theoretical $\gamma^{{\star}}$", fontsize=20)
     axs.grid()
+
+    cbar = fig.colorbar(scatter, ax=axs)
+    cbar.set_label(r"Sampling $\delta$", fontsize=20, rotation=270, labelpad=28)
+    cbar.set_ticks([0.2, 0.4, 0.6, 0.8, 1.0])    # TODO: hard-coded
+    cbar.ax.tick_params(labelsize=15)
 
     fig.tight_layout()
     os.makedirs(os.path.dirname(save_fn), exist_ok=True)
@@ -135,21 +147,21 @@ if __name__ == "__main__":
     empirical_betas, empirical_gammas = zip(*empirical_opts)
 
     axs[0].plot(
-        unif_deltas, empirical_betas, marker="o", markersize=10,
-        linewidth=5, label=rf"Empirical $\beta^{{\star}}$"
+        unif_deltas, theoretical_betas, marker="o", markersize=10,
+        linewidth=5, color="black", label=rf"Theoretical $\beta^{{\star}}$"
     )
     axs[0].plot(
-        unif_deltas, theoretical_betas, marker="o", markersize=10,
-        linewidth=5, linestyle="--", color="black", label=rf"Theoretical $\beta^{{\star}}$"
+        unif_deltas, empirical_betas, marker="o", markersize=10,
+        linewidth=5, linestyle="--", label=rf"Empirical $\beta^{{\star}}$"
     )
     axs[0].set_ylim(bottom=0)
     axs[1].plot(
-        unif_deltas, empirical_gammas, marker="o", markersize=10,
-        linewidth=5, label=rf"Empirical $\gamma^{{\star}}$"
+        unif_deltas, theoretical_gammas, marker="o", markersize=10,
+        linewidth=5, color="black", label=rf"Theoretical $\gamma^{{\star}}$"
     )
     axs[1].plot(
-        unif_deltas, theoretical_gammas, marker="o", markersize=10,
-        linewidth=5, linestyle="--", color="black", label=rf"Theoretical $\gamma^{{\star}}$"
+        unif_deltas, empirical_gammas, marker="o", markersize=10,
+        linewidth=5, linestyle="--", label=rf"Empirical $\gamma^{{\star}}$"
     )
     axs[1].set_ylim(bottom=0, top=1)
 
