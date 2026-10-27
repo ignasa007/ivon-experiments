@@ -7,7 +7,7 @@ from torch import optim
 from constants import *
 from utilities import MLP, train_gd, plot, \
     compute_gradient, compute_momentum, compute_exp_avg, compute_exp_avg_sq, \
-    exact_hess_diag, estimate_hess_diag, exact_ggn_diag, estimate_ggn_diag
+    exact_hess_diag, estimate_hess_diag, exact_ggn_diag, estimate_ggn_diag, empirical_fisher_diag
 
 
 def as_list(s):
@@ -43,9 +43,10 @@ tracker_fns_map = {
     "exp_avg": (compute_exp_avg, "Exp Avg"),
     "exp_avg_sq": (compute_exp_avg_sq, "Exp Avg Sq"),
     "exact_hess_diag": (exact_hess_diag, "Exact Hess Diag"),
-    "hess_diag": (estimate_hess_diag, "Hessian Diagonal"),
-    "exact_ggn_diag": (exact_ggn_diag, "Exact GGN Diagonal"),
-    "ggn_diag": (estimate_ggn_diag, "GGN Diagonal"),
+    "hess_diag": (estimate_hess_diag, "Estimated Hess Diag"),
+    "exact_ggn_diag": (exact_ggn_diag, "Exact GGN Diag"),
+    "ggn_diag": (estimate_ggn_diag, "Estimated GGN Diag"),
+    "empirical_fisher_diag": (empirical_fisher_diag, "Empirical Fisher Diag"),
 }
 
 def make_optim_kwargs(args):

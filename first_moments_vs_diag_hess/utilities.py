@@ -78,11 +78,11 @@ class MLP(Model):
         x = self.normalization(x)
         return self.readout(x)
 
-def loss_fn(outputs, one_hot, loss_type):
+def loss_fn(outputs, one_hot, loss_type, reduction="sum"):
     if loss_type.lower() == "cross entropy loss":
-        return F.cross_entropy(outputs, one_hot, reduction="sum") / outputs.size(0)
+        return F.cross_entropy(outputs, one_hot, reduction=reduction) / outputs.size(0)
     elif loss_type.lower() == "mean squared error":
-        return 0.5 * F.mse_loss(outputs, one_hot, reduction="sum") / outputs.size(0)
+        return 0.5 * F.mse_loss(outputs, one_hot, reduction=reduction) / outputs.size(0)
     raise ValueError('Only "cross entropy loss" and "mean squared error" supported for argument `loss_type`.')
 
 def train_gd(
@@ -257,17 +257,15 @@ def estimate_hess_diag(X, Y, model, loss_type, optimizer, device, hutchinson_sam
 
 def exact_ggn_diag(X, Y, model, loss_type, optimizer, device):
     assert loss_type == "mean squared error"
-    names = [name for name, _ in model.named_parameters()]
-    params = dict(model.named_parameters())
     outputs = model(X).flatten()
-    ggn_diag = {name: torch.zeros_like(params[name]) for name in names}
-    for idx in range(outputs.numel()):
-        model.zero_grad()
-        outputs[idx].backward(retain_graph=True)
-        for name in names:
-            ggn_diag[name] += params[name].grad.square()
-    model.zero_grad()
-    return 1/X.size(0) * torch.cat([ggn_diag[name].flatten() for name in params])
+    ggn_diag = torch.zeros(sum(p.numel() for p in model.parameters() if p.requires_grad), device=device)
+    for output in outputs:
+        optimizer.zero_grad()
+        output.backward(retain_graph=True)
+        ggn_diag += compute_gradient(X, Y, model, loss_type, optimizer, device).square()
+    optimizer.zero_grad()
+    # The 1/N scaling accounts for the curvature of the loss wrt network output
+    return 1/X.size(0) * ggn_diag
 
 def estimate_ggn_diag(X, Y, model, loss_type, optimizer, device, hutchinson_samples):
     assert loss_type == "mean squared error"
@@ -285,6 +283,19 @@ def estimate_ggn_diag(X, Y, model, loss_type, optimizer, device, hutchinson_samp
         sum_samples += 1/X.size(0) * torch.cat([(random_vectors[name]*JtJv[name]).reshape(-1) for name in names])
     ggn_diag = sum_samples / hutchinson_samples
     return ggn_diag
+
+def empirical_fisher_diag(X, Y, model, loss_type, optimizer, device):
+    losses = loss_fn(model(X), Y, loss_type, reduction="none")
+    if loss_type == "mean squared error":
+        losses = torch.sum(losses, dim=1)
+    fisher_diag = torch.zeros(sum(p.numel() for p in model.parameters() if p.requires_grad), device=device)
+    for loss in losses:
+        optimizer.zero_grad()
+        loss.backward(retain_graph=True)
+        fisher_diag += compute_gradient(X, Y, model, loss_type, optimizer, device).square()
+    optimizer.zero_grad()
+    # Don't need the 1/N scaling since it is already performed in the loss_fn
+    return fisher_diag
 
 def power_law_offset(x, a=1., b=1., c=1.):
     return np.log(a + b * (x ** c))

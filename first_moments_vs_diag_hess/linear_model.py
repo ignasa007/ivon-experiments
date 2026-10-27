@@ -1,5 +1,18 @@
-from utilities import *
-from main import *
+from typing import Callable
+import os
+
+import numpy as np
+from scipy.optimize import curve_fit
+import torch
+from torch import optim, nn
+from torch.utils.data import Subset, DataLoader
+from torchvision import transforms
+import matplotlib.pyplot as plt
+
+from constants import DATASTORE, ASSETS
+from utilities import Model, loss_fn, power_law_offset, power_law_offset_format
+from main import as_list, parser, \
+    dataset_map, optimizer_map, tracker_fns_map, make_optim_kwargs, make_tracker_fns
 
 
 class MLP(Model):
@@ -16,7 +29,7 @@ class MLP(Model):
         return x
     
     @torch.no_grad()
-    def balanced_solution(self, W: torch.Tensor, seed: int = None) -> None:
+    def balanced_solution(self, W: torch.Tensor) -> None:
         # Setup
         all_layers = self._all_layers()
         L = len(all_layers)
@@ -94,10 +107,10 @@ def train_gd(
     ols_soln = (torch.linalg.pinv(train_inputs) @ one_hot).T
     for _ in range(4):
         ols_soln_perturbed = ols_soln + 0.1 * ols_soln.abs().sqrt() * torch.randn_like(ols_soln)
-        model.balanced_solution(ols_soln_perturbed, seed=seed)
+        model.balanced_solution(ols_soln_perturbed)
         losses, tracked_vals = log_metrics(losses, tracked_vals)
 
-    model.balanced_solution(ols_soln, seed=seed)
+    model.balanced_solution(ols_soln)
     losses, tracked_vals = log_metrics(losses, tracked_vals)
 
     assets = (train_inputs, one_hot, model, optimizer)
@@ -160,15 +173,22 @@ def plot(xs, ys, ckpts, xlabel, ylabel, save_fn=None):
 
 def driver(cmd: str, ckpts: list, save_fn: str) -> None:
     args = parser.parse_args(cmd.split())
+    hess_idx = args.trackers.index("exact_hess_diag")
     args.bias = False
     _, out = run(args)
     tracked_vals = out[1:]
     labels = [tracker_fns_map[tracker][1] for tracker in args.trackers]
-    plot(*tracked_vals, ckpts, *labels, save_fn=save_fn)
+    ys, ylabel = tracked_vals[hess_idx], labels[hess_idx]
+    for x_idx in range(len(args.trackers)):
+        if x_idx == hess_idx:
+            continue
+        xs, xlabel = tracked_vals[x_idx], labels[x_idx]
+        plot(xs, ys, ckpts, xlabel, ylabel, save_fn=save_fn.format(comparison=args.trackers[x_idx]))
 
 
 driver(
-    "--optimizer adam --subset_size 1000 --widths [] --trackers gradient exact_hess_diag --seed 0",
+    # NOTE: has to be static measures since we're not training the model
+    "--optimizer adam --subset_size 1000 --widths [] --trackers gradient empirical_fisher_diag exact_hess_diag --seed 0",
     ["Random Initialization"] + ["Perturbed OLS Solution"]*4 + ["OLS Solution"],
-    save_fn="assets/theory/linear.png"
+    save_fn=ASSETS+"/theory/linear-{comparison}.png"
 )
