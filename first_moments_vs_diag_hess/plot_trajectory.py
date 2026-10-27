@@ -82,6 +82,7 @@ if __name__ == "__main__":
 
     os.makedirs(RESULTS, exist_ok=True)
     LOG_FN = f"{RESULTS}/logs.csv"
+    SAVE_DIR = f"{ASSETS}/trajectory"
 
     # Datasets
     STEPS, CKPTS = 5000, 20
@@ -92,7 +93,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --dataset cifar100", "CIFAR-100"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/datasets.png"
+    save_fn = f"{SAVE_DIR}/datasets.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
 
     # Subset Sizes
@@ -105,7 +106,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --subset_size 25000", "N = 25k"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/subset-sizes.png"
+    save_fn = f"{SAVE_DIR}/subset-sizes.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
 
     # Widths
@@ -117,7 +118,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --widths [512]*3", "D = 512"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/widths.png"
+    save_fn = f"{SAVE_DIR}/widths.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
 
     # Depths
@@ -129,7 +130,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --widths [64]*7", "L = 8"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/depths.png"
+    save_fn = f"{SAVE_DIR}/depths.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
 
     # Activations
@@ -142,7 +143,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --activation sigmoid", "Sigmoid"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/activations.png"
+    save_fn = f"{SAVE_DIR}/activations.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
 
     # Beta1
@@ -155,7 +156,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --beta1 0.999", r"$\beta_1=0.999$"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/beta1.png"
+    save_fn = f"{SAVE_DIR}/beta1.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
 
     # Beta2
@@ -168,7 +169,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --beta2 0.999", r"$\beta_2=0.999$"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/beta2.png"
+    save_fn = f"{SAVE_DIR}/beta2.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
 
     # Epsilon
@@ -180,7 +181,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --eps 1e-5", r"$\epsilon=10^{-5}$"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/eps.png"
+    save_fn = f"{SAVE_DIR}/eps.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
 
     # Weight Decay
@@ -192,7 +193,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --weight_decay 1e-2", r"$\lambda=10^{-2}$"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/weight-decay.png"
+    save_fn = f"{SAVE_DIR}/weight-decay.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
 
     # Batch Size
@@ -204,7 +205,7 @@ if __name__ == "__main__":
         (f"--optimizer adam --batch_size 5000", "Full Batch"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/batch-size.png"
+    save_fn = f"{SAVE_DIR}/batch-size.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
 
     # Hutchinson Samples
@@ -217,5 +218,5 @@ if __name__ == "__main__":
         (f"--optimizer adam --trackers exp_avg_sq exact_hess_diag", "Exact"),
     ]
     cmds = [(f"{cmd} --steps {STEPS} --ckpts {CKPTS}", label) for cmd, label in cmds]
-    save_fn = f"{ASSETS}/hutchinson-samples.png"
+    save_fn = f"{SAVE_DIR}/hutchinson-samples.png"
     main(cmds, steps=STEPS, read_fn=LOG_FN, save_fn=save_fn)
